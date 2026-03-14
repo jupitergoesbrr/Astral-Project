@@ -554,16 +554,21 @@
 
         /* Fake Online Counter & Ticker Updates */
         setInterval(() => {
-            const online = Math.floor(Math.random() * (160 - 120 + 1)) + 120;
+            const online = Math.floor(Math.random() * (16 - 15 + 1)) + 15;
             document.getElementById('online-counter').innerText = `🟢 ${online} Players Online`;
         }, 8000);
 
         const tickerMessages = [
-            "User_842 just hit Level 50 in Run 3! 🏃‍♂️",
+            "User just hit Level 50 in Run 3! 🏃‍♂️",
             "🎮 1v1.lol lobbies are filling up fast!",
             "⭐ RetroBowl is trending this hour!",
-            "User_099 just set a new high score in Flappy Bird! 🦅",
+            "User just set a new high score in Flappy Bird! 🦅",
             "🔥 Top pick today: Subway Surfers!"
+            "User just got 1.463.256 'score' in Subway Surfers",
+            "🎮 Who new kids liked minecraft so much?",
+            "⭐ Geomtry Dash is trending this hour!",
+            "User just set a new high score in Burrito Bison!",
+            "🔥 Top pick today: Minecraft!"
         ];
         
         setInterval(() => {
