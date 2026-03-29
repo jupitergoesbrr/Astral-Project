@@ -3,7 +3,7 @@ name: Deploy to Bunny.net
 on:
   push:
     branches:
-      - main  # This triggers the update whenever you push to your main branch
+      - main
 
 jobs:
   deploy:
@@ -13,14 +13,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Upload to Bunny Storage
-        uses: ayusharma/bunnycdn-storage-deploy@v2.2.3
+        # Switched to the maintained version
+        uses: ayeressian/bunnycdn-storage-deploy@v2.4.6
         with:
-          source: './'  # This uploads everything in your repo
-          storageZoneName: 'astral-os' # Replace with your actual Storage Zone name
+          source: './' 
+          storageZoneName: 'astral-os'
           storagePassword: ${{ secrets.BUNNY_STORAGE_PASS }}
-          remove: true  # This deletes old files in storage that aren't in GitHub anymore
+          remove: "true" # Must be a string "true" for this action
+          upload: "true"
 
       - name: Purge Bunny Cache
+        # Added the correct endpoint and fixed the syntax
         run: |
-          curl -X POST "https://api.bunny.net{{ secrets.BUNNY_PULL_ZONE_ID }}" \
-          -H "AccessKey: ${{ secrets.BUNNY_API_KEY }}"
+          curl -X POST "https://api.bunny.net{{ secrets.BUNNY_PULL_ZONE_ID }}/purgeCache" \
+          -H "AccessKey: ${{ secrets.BUNNY_API_KEY }}" \
+          -H "Content-Type: application/json"
