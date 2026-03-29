@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Games - Help & Support</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: Arial, Helvetica, sans-serif; background-color: #f0f8ff; }
+        
+        /* The main disguise site */
+        #disguise-frame { width: 100%; height: 100%; border: none; }
+
+        /* Bottom Left Help Link */
+        #help-btn {
+            position: fixed;
+            bottom: 10px;
+            left: 15px;
+            color: #0055aa;
+            font-size: 12px;
+            text-decoration: underline;
+            cursor: pointer;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        /* The Help Page Overlay */
+        #help-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; color: #333; line-height: 1.6; }
+        h1, h2 { color: #0055aa; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .section { margin-bottom: 30px; }
+        .contact-info { background: #f9f9f9; padding: 15px; border-left: 5px solid #3498db; margin: 10px 0; }
+        
+        /* Admin Section at the Bottom */
+        #admin-trigger {
+            margin-top: 80px;
+            padding: 40px 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        #admin-trigger p { font-size: 11px; color: #999; margin-bottom: 10px; }
+        #admin-trigger input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 220px;
+            font-size: 14px;
+        }
+        #admin-trigger button {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #666;
+        }
+        #admin-trigger button:hover { background: #eee; }
+
+        /* The actual app container */
+        #app { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; }
+        
+        #close-help {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="help-btn">Help?</div>
+
+    <iframe id="disguise-frame" src="https://www.mathsisfun.com/games/index.html"></iframe>
+
+    <div id="help-overlay">
+        <div class="container">
+            <button id="close-help">Close [X]</button>
+            
+            <h1>Support & Documentation</h1>
+
+            <div class="section">
+                <h2>📧 How to Contact Math is Fun</h2>
+                <div class="contact-info">
+                    <p><strong>The Contact Page is Key:</strong> You can send them a message directly through their Contact Us page.</p>
+                    <p><strong>The Email Address:</strong> If you are having issues and need a reply, watch out for your mail filters! They sometimes get blocked, so make sure your email allows messages from <strong>funmath@gmail.com</strong>.</p>
+                </div>
+                <p><strong>Who is behind it?</strong> The site is maintained by Rod Pierce and many contributors, and they totally welcome feedback on improvements.</p>
+                <p><strong>Don't Ask for Private Help:</strong> Heads up—they don't sell products directly, so they won't ask for payment or personal address details. Don't fall for scams!</p>
+            </div>
+
+            <div class="section">
+                <h2>🎮 What to Do If a Game Doesn't Work</h2>
+                <ul>
+                    <li><strong>Click the Game Area:</strong> Sometimes, especially with browser games, the game just needs to know you are "active." Click inside the game area to wake it up.</li>
+                    <li><strong>Switch to HTML5 Versions:</strong> Look for links to "HTML5" versions of puzzles if the old ones aren't loading.</li>
+                    <li><strong>Restart the Scene:</strong> If the game is acting buggy, try pressing the <strong>Ctrl key</strong> to restart the current level.</li>
+                    <li><strong>Check Browser Issues:</strong> Try switching to a modern browser like <strong>Chrome</strong> or Firefox.</li>
+                    <li><strong>"Script Running Too Long":</strong> Complex math tasks can cause the browser to freeze. Just give it a moment.</li>
+                    <li><strong>Save Data Problems:</strong> Progress can sometimes fail on certain browsers or mobile devices like iPads.</li>
+                </ul>
+            </div>
+
+            <div id="admin-trigger">
+                <p>System Diagnostics Mode v4.0.2</p>
+                <input type="password" id="p" placeholder="Enter Serial Key">
+                <button id="go">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app"></div>
+
+    <script>
+        const helpBtn = document.getElementById('help-btn');
+        const overlay = document.getElementById('help-overlay');
+        const passInput = document.getElementById('p');
+        const appContainer = document.getElementById('app');
+        const closeHelp = document.getElementById('close-help');
+
+        // Open Help
+        helpBtn.addEventListener('click', () => {
+            overlay.style.display = 'block';
+        });
+
+        // Close Help
+        closeHelp.addEventListener('click', () => {
+            overlay.style.display = 'none';
+        });
+
+        // Toggle with backtick key ( ` )
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '`') {
+                overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
+                if (overlay.style.display === 'block') passInput.focus();
+            }
+        });
+
+        // Verification Logic
+        document.getElementById('go').addEventListener('click', async () => {
+            const val = passInput.value;
+            
+            // "Njk0MjA=" is Base64 for 69420
+            if (btoa(val) !== "Njk0MjA=") {
+                overlay.style.display = 'none';
+                passInput.value = '';
+                return;
+            }
+
+            // Success: Hide everything and show the app
+            overlay.style.display = 'none';
+            appContainer.style.display = 'block';
+            document.getElementById('disguise-frame').style.display = 'none';
+            helpBtn.style.display = 'none';
+
+            // Cache-busting URL (adds unique timestamp to prevent failed-fetch caching)
+            const url = "https://cdn.jsdelivr.net/gh/jupitergoesbrr/Astral-Project@main/text.html?nocache=" + Math.random();
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Fetch failed');
+                
+                const raw = await response.text();
+
+                // Create a clean iframe to run the injected script
+                const frame = document.createElement('iframe');
+                frame.style.width = "100%";
+                frame.style.height = "100%";
+                frame.style.border = "none";
+                appContainer.appendChild(frame);
+                
+                const doc = frame.contentWindow.document;
+                doc.open();
+                doc.write(raw);
+                doc.close();
+            } catch (e) {
+                console.error("Error loading external file:", e);
+                alert("Connection Error. Ensure you have added 'Access-Control-Allow-Origin: *' in your Bunny.net headers.");
+            }
+        });
+
+        // Enter key shortcut
+        passInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('go').click();
+        });
+    </script>
+</body>
+</html>
