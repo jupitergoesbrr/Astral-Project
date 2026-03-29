@@ -14,7 +14,7 @@ jobs:
 
       - name: Upload to Bunny Storage
         # Switched to the maintained version
-        uses: ayeressian/bunnycdn-storage-deploy@v2
+        uses: ayeressian/bunnycdn-storage-deploy@2.4.6
         with:
           source: './' 
           storageZoneName: 'astral-os'
