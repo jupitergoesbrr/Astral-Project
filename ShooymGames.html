@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooym Games</title>
+    <style>
+        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; }
+        #game-container { width: 100vw; height: 100vh; overflow: auto; }
+        .error { padding: 20px; color: #ff6b6b; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">Loading game assets...</div>
+
+    <script>
+        async function loadGame() {
+            const targetUrl = 'https://shooymgames.vercel.app/index.html';
+            const container = document.getElementById('game-container');
+
+            try {
+                const response = await fetch(targetUrl);
+                
+                if (!response.ok) throw new Error('Could not reach the game server.');
+
+                let html = await response.text();
+
+                // FIX: Inject the <base> tag so relative paths (images/scripts) work
+                const baseTag = `<base href="https://shooymgames.vercel.app/">`;
+                
+                // We insert the base tag right after the <head> starts
+                if (html.includes('<head>')) {
+                    html = html.replace('<head>', `<head>${baseTag}`);
+                } else {
+                    html = baseTag + html;
+                }
+
+                container.innerHTML = html;
+
+                // FIX: Scripts injected via innerHTML don't run automatically. 
+                // We need to manually find and execute them.
+                const scripts = container.querySelectorAll("script");
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement("script");
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+            } catch (error) {
+                container.innerHTML = `<div class="error">
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Note: If you see a CORS error in the console, this method will not work without a proxy.</p>
+                </div>`;
+            }
+        }
+
+        loadGame();
+    </script>
+</body>
+</html>
