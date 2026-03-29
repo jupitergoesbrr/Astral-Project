@@ -3,7 +3,7 @@ name: Deploy to Bunny.net
 on:
   push:
     branches:
-      - main  # Runs automatically when you push to the main branch
+      - main
 
 jobs:
   deploy:
@@ -17,13 +17,9 @@ jobs:
           STORAGE_NAME: "astral-os"
           STORAGE_PASS: ${{ secrets.BUNNY_STORAGE_PASS }}
         run: |
-          # This command finds every file and uploads it while keeping your folder structure
           find . -type f -not -path '*/.*' -not -path './.github/*' | while read -r file; do
-            # Remove the './' from the file path for the upload URL
             dest_path=$(echo "$file" | sed 's|^\./||')
-            
             echo "Uploading $dest_path..."
-            
             curl -sS -X PUT "https://storage.bunnycdn.com" \
                  -H "AccessKey: $STORAGE_PASS" \
                  -H "Content-Type: application/octet-stream" \
@@ -31,9 +27,13 @@ jobs:
           done
 
       - name: Purge Bunny Cache
-        # Only runs if the upload step was successful
         if: success()
+        env:
+          # Using env variables is safer for curl URLs
+          ZONE_ID: ${{ secrets.BUNNY_PULL_ZONE_ID }}
+          API_KEY: ${{ secrets.BUNNY_API_KEY }}
         run: |
-          curl -sS -X POST "https://api.bunny.net{{ secrets.BUNNY_PULL_ZONE_ID }}/purgeCache" \
-               -H "AccessKey: ${{ secrets.BUNNY_API_KEY }}" \
+          echo "Purging Cache for Zone ID: $ZONE_ID"
+          curl -sS -X POST "https://api.bunny.net" \
+               -H "AccessKey: $API_KEY" \
                -H "Content-Type: application/json"
