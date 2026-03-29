@@ -12,19 +12,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Upload to Bunny Storage
-        # Switched to the maintained version
-        uses: R-J-dev/bunny-deploy@v1
-        with:
-          source: './' 
-          storageZoneName: 'astral-os'
-          storagePassword: ${{ secrets.BUNNY_STORAGE_PASS }}
-          remove: "true" # Must be a string "true" for this action
-          upload: "true"
+      - name: Upload Files to Bunny Storage
+        # This loops through your files and uploads them directly via API
+        run: |
+          for file in $(find . -maxdepth 1 -type f -not -path '*/.*'); do
+            filename=$(basename "$file")
+            echo "Uploading $filename..."
+            curl -X PUT "https://storage.bunnycdn.com" \
+                 -H "AccessKey: ${{ secrets.BUNNY_STORAGE_PASS }}" \
+                 -T "$file"
+          done
 
       - name: Purge Bunny Cache
-        # Added the correct endpoint and fixed the syntax
+        # This tells Bunny to show the new files immediately
         run: |
           curl -X POST "https://api.bunny.net{{ secrets.BUNNY_PULL_ZONE_ID }}/purgeCache" \
-          -H "AccessKey: ${{ secrets.BUNNY_API_KEY }}" \
-          -H "Content-Type: application/json"
+               -H "AccessKey: ${{ secrets.BUNNY_API_KEY }}" \
+               -H "Content-Type: application/json"
