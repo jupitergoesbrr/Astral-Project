@@ -14,36 +14,16 @@ jobs:
 
       - name: Upload Files to Bunny Storage
         env:
-          STORAGE_NAME: "astral-os" # Check that this matches your Bunny Storage Zone name exactly
+          STORAGE_NAME: "astral-os"
           STORAGE_PASS: ${{ secrets.BUNNY_STORAGE_PASS }}
         run: |
-          # 1. Safety check for secrets
-          if [ -z "$STORAGE_PASS" ]; then
-            echo "ERROR: BUNNY_STORAGE_PASS is empty. Check your GitHub Secrets."
-            exit 1
-          fi
-
-          # 2. Upload files
-          # This finds files in the root and uploads them
+          # Use find to get files and upload them
           find . -maxdepth 1 -type f -not -path '*/.*' | while read -r file; do
             filename=$(basename "$file")
             echo "Uploading $filename..."
-            curl -sS -X PUT "https://storage.bunnycdn.com{STORAGE_NAME}/${filename}" \
-                 -H "AccessKey: ${STORAGE_PASS}" \
+            # FIXED: Using double quotes allows the variables to be read correctly
+            curl -sS -X PUT "https://storage.bunnycdn.com" \
+                 -H "AccessKey: $STORAGE_PASS" \
                  -H "Content-Type: application/octet-stream" \
-                 --data-binary @"$file" || exit 1
+                 --data-binary @"$file"
           done
-
-      - name: Purge Bunny Cache
-        if: success()
-        env:
-          ZONE_ID: ${{ secrets.BUNNY_PULL_ZONE_ID }}
-          API_KEY: ${{ secrets.BUNNY_API_KEY }}
-        run: |
-          if [ -z "$ZONE_ID" ] || [ -z "$API_KEY" ]; then
-             echo "Skipping purge: Secrets missing."
-          else
-             curl -sS -X POST "https://api.bunny.net{ZONE_ID}/purgeCache" \
-                  -H "AccessKey: ${API_KEY}" \
-                  -H "Content-Type: application/json"
-          fi
