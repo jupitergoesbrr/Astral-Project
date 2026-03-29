@@ -1,0 +1,26 @@
+name: Deploy to Bunny.net
+
+on:
+  push:
+    branches:
+      - main  # This triggers the update whenever you push to your main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Upload to Bunny Storage
+        uses: ayusharma/bunnycdn-storage-deploy@v2.2.3
+        with:
+          source: './'  # This uploads everything in your repo
+          storageZoneName: 'astral-os' # Replace with your actual Storage Zone name
+          storagePassword: ${{ secrets.BUNNY_STORAGE_PASS }}
+          remove: true  # This deletes old files in storage that aren't in GitHub anymore
+
+      - name: Purge Bunny Cache
+        run: |
+          curl -X POST "https://api.bunny.net{{ secrets.BUNNY_PULL_ZONE_ID }}" \
+          -H "AccessKey: ${{ secrets.BUNNY_API_KEY }}"
