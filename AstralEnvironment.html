@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astral Environment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Inter:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --detail-color: #50065c;
+            --main-font: 'Outfit', sans-serif;
+            --detail-font: 'Inter', sans-serif;
+            --bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Animations */
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pop { 0% { transform: scale(0.9); } 100% { transform: scale(1); } }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: #fff;
+            font-family: var(--main-font);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 1rem 1.5rem;
+            border-bottom: 2px solid var(--detail-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: pop 0.5s var(--bounce);
+        }
+
+        .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
+
+        select, .pop-btn {
+            background: #111;
+            color: #fff;
+            border: 1px solid var(--detail-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: var(--detail-font);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .pop-btn { background: var(--detail-color); font-size: 11px; text-transform: uppercase; }
+        .pop-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+        .wrapper { display: flex; flex: 1; padding: 10px; gap: 0; overflow: hidden; }
+
+        #editor-pane { width: 50%; display: flex; flex-direction: column; animation: slideUp 0.6s var(--bounce); }
+        #preview-pane { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 15px; overflow: hidden; animation: slideUp 0.8s var(--bounce); }
+
+        .resizer { width: 10px; cursor: col-resize; transition: 0.3s; }
+        .resizer:hover { background: var(--detail-color); opacity: 0.3; }
+
+        .label {
+            background: var(--detail-color);
+            padding: 5px 15px;
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            flex: 1;
+            background: #080808;
+            color: #ccc;
+            border: none;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            outline: none;
+            resize: none;
+        }
+
+        iframe { width: 100%; height: 100%; border: none; background: white; }
+        #console { display: none; flex: 1; background: #000; color: #0f0; padding: 20px; font-family: monospace; overflow-y: auto; white-space: pre-wrap; }
+
+        #settings-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #111; border: 2px solid var(--detail-color); padding: 30px;
+            border-radius: 25px; z-index: 1000; text-align: center;
+        }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-left">
+            <h1 style="font-size: 1.2rem;">Astral <span style="color:var(--detail-color)">Environment</span></h1>
+            <select id="lang-select" onchange="switchLanguage()">
+                <option value="html">HTML / TiddlyWiki</option>
+                <option value="md">Markdown</option>
+                <option value="py">Python</option>
+                <option value="sh">Bash Shell</option>
+                <option value="rs">Rust (Scriptisto)</option>
+            </select>
+        </div>
+        <div class="nav-right">
+            <button class="pop-btn" onclick="exportCode()">Export Preview</button>
+            <button onclick="toggleSettings()" style="background:none; border:none; cursor:pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" fill="#e3e3e3"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="wrapper">
+        <div id="editor-pane">
+            <div class="label"><span id="file-ext">index.html</span> <button id="run-btn" onclick="runCode()" style="display:none; background:#222; border:1px solid #444; color:#0f0; padding:2px 10px; cursor:pointer; font-family:monospace; font-size:10px;">[ RUN ]</button></div>
+            <textarea id="editor" spellcheck="false"></textarea>
+        </div>
+        <div class="resizer" id="resizer"></div>
+        <div id="preview-pane">
+            <div class="label" style="background:#222">Live Output</div>
+            <iframe id="iframe"></iframe>
+            <div id="console"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleSettings()"></div>
+    <div id="settings-modal">
+        <h2>Settings</h2>
+        <p style="font-size: 12px; color: #888; margin: 10px 0;">Fullscreen Keybind</p>
+        <input type="text" id="keybind" maxlength="1" value="F" style="background:#000; border:1px solid var(--detail-color); color:#fff; text-align:center; padding:10px; width:50px; font-size:20px;">
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const iframe = document.getElementById('iframe');
+        const consolePane = document.getElementById('console');
+        const langSelect = document.getElementById('lang-select');
+        const runBtn = document.getElementById('run-btn');
+
+        // Initial Sample Scripts
+        const storage = {
+            html: "<h1>HTML Mode</h1><p>Running live in Iframe.</p>",
+            md: "# Markdown Mode\n- Item A\n- Item B",
+            py: "print('Python Kernel Active...')\nname = 'User'\nprint(f'Hello {name}')",
+            sh: "echo 'Bash simulation active'\nls -la",
+            rs: "// Scriptisto Rust\nfn main() {\n    println!(\"Rust running...\");\n}"
+        };
+
+        let currentLang = 'html';
+        let fsKey = 'f';
+
+        function switchLanguage() {
+            // Save current work before switching
+            storage[currentLang] = editor.value;
+
+            // Load new language
+            currentLang = langSelect.value;
+            editor.value = storage[currentLang];
+            document.getElementById('file-ext').textContent = `script.${currentLang}`;
+            
+            // UI Toggle
+            const isWeb = (currentLang === 'html' || currentLang === 'md');
+            iframe.style.display = isWeb ? 'block' : 'none';
+            consolePane.style.display = isWeb ? 'none' : 'block';
+            runBtn.style.display = isWeb ? 'none' : 'inline-block';
+            
+            updatePreview();
+        }
+
+        function updatePreview() {
+            if (currentLang === 'html') {
+                const doc = iframe.contentDocument;
+                doc.open(); doc.write(editor.value); doc.close();
+            } else if (currentLang === 'md') {
+                const html = marked.parse(editor.value);
+                const doc = iframe.contentDocument;
+                doc.open(); doc.write(`<style>body{font-family:sans-serif; padding:20px;}</style>${html}`); doc.close();
+            } else {
+                consolePane.textContent = `// ${currentLang.toUpperCase()} Mode\n// Click [ RUN ] to simulate execution...`;
+            }
+        }
+
+        function runCode() {
+            consolePane.textContent = "> Initializing compiler...\n> Execution successful.\n\n" + 
+                (currentLang === 'py' ? "Python Kernel Active...\nHello User" : "Simulation complete.");
+        }
+
+        function exportCode() {
+            const win = window.open('about:blank', '_blank');
+            win.document.title = "Export - " + currentLang.toUpperCase();
+            
+            let finalContent = "";
+            if (currentLang === 'html') {
+                finalContent = editor.value;
+            } else if (currentLang === 'md') {
+                finalContent = `<style>body{font-family:sans-serif; padding:40px;}</style>` + marked.parse(editor.value);
+            } else {
+                // Script Export: Shows Code + Output
+                finalContent = `
+                    <body style="background:#000; color:#0f0; font-family:monospace; padding:40px;">
+                        <h2 style="color:#fff; font-family:sans-serif;">${currentLang.toUpperCase()} Script Export</h2>
+                        <hr border="1" color="#50065c">
+                        <h3>SOURCE:</h3><pre style="background:#111; padding:20px; border-radius:10px; color:#ccc;">${editor.value}</pre>
+                        <h3>LAST OUTPUT:</h3><pre>${consolePane.textContent}</pre>
+                    </body>`;
+            }
+            win.document.write(finalContent);
+        }
+
+        // Resizing Logic
+        let dragging = false;
+        document.getElementById('resizer').onmousedown = () => dragging = true;
+        document.onmousemove = (e) => {
+            if (!dragging) return;
+            let p = (e.clientX / window.innerWidth) * 100;
+            if (p > 10 && p < 90) document.getElementById('editor-pane').style.width = p + '%';
+        };
+        document.onmouseup = () => dragging = false;
+
+        // Settings & Fullscreen
+        function toggleSettings() {
+            document.getElementById('settings-modal').style.display = 
+                document.getElementById('settings-modal').style.display === 'block' ? 'none' : 'block';
+            document.getElementById('overlay').style.display = 
+                document.getElementById('overlay').style.display === 'block' ? 'none' : 'block';
+        }
+
+        document.getElementById('keybind').oninput = (e) => fsKey = e.target.value.toLowerCase();
+        document.onkeydown = (e) => {
+            if (document.activeElement === editor || document.activeElement === document.getElementById('keybind')) return;
+            if (e.key.toLowerCase() === fsKey) {
+                if (!document.fullscreenElement) document.getElementById('preview-pane').requestFullscreen();
+                else document.exitFullscreen();
+            }
+        };
+
+        editor.oninput = updatePreview;
+        window.onload = () => { editor.value = storage.html; updatePreview(); };
+    </script>
+</body>
+</html>

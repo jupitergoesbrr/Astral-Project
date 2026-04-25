@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astral AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --accent: #50065c;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { background: #000; color: white; font-family: 'Manrope', sans-serif; overflow: hidden; }
+        .jupiter-title { font-family: 'Archivo Black', sans-serif; }
+
+        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); }
+        .glass-purple { background: rgba(80, 6, 92, 0.1); backdrop-filter: blur(15px); border: 1px solid rgba(80, 6, 92, 0.3); }
+
+        .bouncy { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .bouncy:hover { transform: scale(1.05); }
+
+        /* Thick, Polished Purple Plus Button */
+        .plus-btn {
+            transition: all 0.3s ease;
+            border: 4px solid var(--accent); /* Thick border */
+            color: var(--accent);
+            background: transparent;
+        }
+        .plus-btn:hover {
+            background: var(--accent);
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        #file-input { display: none; }
+        #chat-window::-webkit-scrollbar { width: 4px; }
+        #chat-window::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 100; align-items: center; justify-content: center; }
+        .modal.active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .cursor::after { content: '|'; animation: blink 0.8s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <header class="glass z-50 p-4 border-b border-white/5 flex items-center justify-between px-6">
+        <div class="flex items-center gap-4">
+            <h1 class="jupiter-title text-2xl tracking-tighter uppercase italic">Astral <span style="color: var(--accent)">AI</span></h1>
+            <div id="status-badge" class="text-[10px] font-bold bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 tracking-widest uppercase">READY</div>
+        </div>
+        <button onclick="toggleModal('settings-modal')" class="bouncy p-2 rounded-full glass flex items-center gap-2">
+            <span class="material-symbols-outlined text-white">settings</span>
+            <span class="text-xs font-bold uppercase mr-2"></span>
+        </button>
+    </header>
+
+    <div id="chat-window" class="flex-1 overflow-y-auto p-4 md:p-12 space-y-8 max-w-4xl mx-auto w-full">
+        <div class="glass-purple p-6 rounded-3xl rounded-tl-none border-l-4 border-[#50065c] shadow-2xl">
+            <div class="text-[10px] text-[#50065c] font-bold mb-2 uppercase tracking-widest">Astral AI</div>
+            Go ahead, ask me a question. Or change my personality by clicking the gear icon in the top right.
+        </div>
+    </div>
+
+    <footer class="p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
+        <div class="max-w-4xl mx-auto flex items-center gap-3 relative">
+            <input type="file" id="file-input" onchange="handleFileUpload(event)" accept=".txt,.js,.py,.html,.css,.json,.png,.jpg,.jpeg">
+            <button onclick="document.getElementById('file-input').click()" 
+                    class="plus-btn flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center bouncy shadow-lg">
+                <span class="material-symbols-outlined font-bold" style="font-variation-settings: 'wght' 700;">add</span>
+            </button>
+
+            <div class="relative flex-1">
+                <input type="text" id="user-input" 
+                       placeholder="Upload a file for initialization, or ask a question..." 
+                       class="glass w-full rounded-2xl px-6 py-5 text-white outline-none focus:ring-2 focus:ring-[#50065c]/50 pr-24 shadow-2xl">
+                <button onclick="sendMessage()" 
+                        class="bouncy absolute right-2 top-2 bottom-2 bg-[#50065c] text-white px-6 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(80,6,92,0.4)]">
+                    SEND
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <div id="settings-modal" class="modal">
+        <div class="glass max-w-md w-full p-8 rounded-3xl border border-white/20">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="jupiter-title text-xl uppercase italic">Change Personality</h2>
+                <button onclick="toggleModal('settings-modal')" class="material-symbols-outlined opacity-50">close</button>
+            </div>
+            <textarea id="system-prompt" rows="4" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-[#50065c]">You are the AI tool for Astral AI. You are highly capable in vision and daily tasks.</textarea>
+            <button onclick="toggleModal('settings-modal')" class="bouncy w-full bg-[#50065c] py-4 mt-4 rounded-xl font-bold uppercase">Update Personality</button>
+        </div>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+        const systemPromptArea = document.getElementById('system-prompt');
+        const statusBadge = document.getElementById('status-badge');
+
+        const GROQ_API_KEY = "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";
+        const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+        const MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct";
+
+        let attachedFileData = null;
+
+        function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            statusBadge.textContent = "UPLOADING";
+            statusBadge.className = "text-[10px] font-bold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-400/30";
+
+            const reader = new FileReader();
+            if (file.type.startsWith('image/')) {
+                reader.onload = (e) => {
+                    attachedFileData = { type: 'image', name: file.name, data: e.target.result };
+                    finalizeUpload(file.name);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                reader.onload = (e) => {
+                    attachedFileData = { type: 'text', name: file.name, data: e.target.result };
+                    finalizeUpload(file.name);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function finalizeUpload(name) {
+            statusBadge.textContent = "READY";
+            statusBadge.className = "text-[10px] font-bold bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30";
+            const info = createMsg('assistant');
+            info.innerHTML = `<em class="opacity-50">📎 Attached: ${name}</em>`;
+        }
+
+        function createMsg(role) {
+            const isUser = role === 'user';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = isUser ? 'bg-white/5 ml-auto p-6 rounded-3xl rounded-tr-none max-w-[85%] border border-white/10' : 'glass-purple p-6 rounded-3xl rounded-tl-none max-w-[85%] shadow-2xl border-l-4 border-[#50065c]';
+            const content = document.createElement('div');
+            content.className = 'whitespace-pre-wrap leading-relaxed';
+            msgDiv.appendChild(content);
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+            return content;
+        }
+
+        async function typeWriter(element, text) {
+            let i = 0; element.classList.add('cursor');
+            return new Promise(resolve => {
+                function type() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i); i++;
+                        chatWindow.scrollTop = chatWindow.scrollHeight;
+                        setTimeout(type, 2);
+                    } else { element.classList.remove('cursor'); resolve(); }
+                }
+                type();
+            });
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text && !attachedFileData) return;
+
+            const systemPrompt = systemPromptArea.value;
+            let messageContent = [];
+
+            if (text) messageContent.push({ type: "text", text: text });
+            else if (attachedFileData && attachedFileData.type === 'image') messageContent.push({ type: "text", text: "Explain this image." });
+
+            if (attachedFileData) {
+                if (attachedFileData.type === 'image') {
+                    messageContent.push({ type: "image_url", image_url: { url: attachedFileData.data } });
+                } else {
+                    const combined = `[FILE: ${attachedFileData.name}]\n${attachedFileData.data}\n\nUSER: ${text || 'Review this code'}`;
+                    if (messageContent.length > 0) messageContent[0].text = combined;
+                    else messageContent.push({ type: "text", text: combined });
+                }
+            }
+
+            const userDisplay = createMsg('user');
+            userDisplay.textContent = text || `Uploaded ${attachedFileData.name}`;
+            userInput.value = '';
+            statusBadge.textContent = "THINKING";
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: MODEL_ID,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: messageContent }
+                        ],
+                        temperature: 0.6,
+                        max_tokens: 1024
+                    })
+                });
+
+                const data = await response.json();
+                if (data?.choices?.[0]?.message) {
+                    await typeWriter(createMsg('assistant'), data.choices[0].message.content);
+                } else { throw new Error(data.error?.message || "Invalid API Response"); }
+
+            } catch (err) {
+                createMsg('assistant').textContent = "⚠️ ERROR: " + err.message;
+            } finally {
+                attachedFileData = null;
+                statusBadge.textContent = "READY";
+            }
+        }
+
+        userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Constellation Field</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    // --- Configuration ---
+    const PARTICLE_COUNT = 300;
+    const MAX_DISTANCE = 150;
+    const COLOR = 0x50065c;
+    const EXPLOSION_FORCE = 5;
+
+    let scene, camera, renderer, particles, lines;
+    let positions, velocities, originalPositions;
+    let mouse = new THREE.Vector2();
+    let targetRotation = new THREE.Vector2();
+    let isMouseDown = false;
+
+    init();
+    animate();
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 500;
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.device_devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // Geometry Setup
+        const geometry = new THREE.BufferGeometry();
+        positions = new Float32Array(PARTICLE_COUNT * 3);
+        velocities = new Float32Array(PARTICLE_COUNT * 3);
+        
+        for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 1000;
+            velocities[i] = 0;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        // Material for Points
+        const pMaterial = new THREE.PointsMaterial({
+            color: COLOR,
+            size: 4,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        particles = new THREE.Points(geometry, pMaterial);
+        scene.add(particles);
+
+        // Lines Geometry (Constellations)
+        const lMaterial = new THREE.LineBasicMaterial({ color: COLOR, transparent: true, opacity: 0.2 });
+        lines = new THREE.LineSegments(new THREE.BufferGeometry(), lMaterial);
+        scene.add(lines);
+
+        // Events
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mousedown', () => isMouseDown = true);
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('resize', onWindowResize);
+    }
+
+    function onMouseMove(event) {
+        // Map mouse position to -1 to 1 for rotation
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        targetRotation.x = mouse.y * -0.5;
+        targetRotation.y = mouse.x * 0.5;
+    }
+
+    function onMouseUp() {
+        isMouseDown = false;
+        
+        // Calculate explosion away from mouse
+        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
+        const dir = vector.sub(camera.position).normalize();
+        const mouseWorldPos = camera.position.clone().add(dir.multiplyScalar(500));
+
+        const posAttr = particles.geometry.attributes.position;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const i3 = i * 3;
+            const dx = posAttr.array[i3] - mouseWorldPos.x;
+            const dy = posAttr.array[i3+1] - mouseWorldPos.y;
+            const dz = posAttr.array[i3+2] - mouseWorldPos.z;
+            
+            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            if (dist < 300) {
+                velocities[i3] += (dx / dist) * EXPLOSION_FORCE;
+                velocities[i3+1] += (dy / dist) * EXPLOSION_FORCE;
+                velocities[i3+2] += (dz / dist) * EXPLOSION_FORCE;
+            }
+        }
+    }
+
+    function updateConnections() {
+        const linePositions = [];
+        const posArray = particles.geometry.attributes.position.array;
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            for (let j = i + 1; j < PARTICLE_COUNT; j++) {
+                const dx = posArray[i * 3] - posArray[j * 3];
+                const dy = posArray[i * 3 + 1] - posArray[j * 3 + 1];
+                const dz = posArray[i * 3 + 2] - posArray[j * 3 + 2];
+                const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                if (dist < MAX_DISTANCE) {
+                    linePositions.push(
+                        posArray[i * 3], posArray[i * 3 + 1], posArray[i * 3 + 2],
+                        posArray[j * 3], posArray[j * 3 + 1], posArray[j * 3 + 2]
+                    );
+                }
+            }
+        }
+        lines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+        lines.geometry.attributes.position.needsUpdate = true;
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Smooth rotation based on mouse
+        particles.rotation.x += (targetRotation.x - particles.rotation.x) * 0.05;
+        particles.rotation.y += (targetRotation.y - particles.rotation.y) * 0.05;
+        lines.rotation.copy(particles.rotation);
+
+        // Apply physics
+        const posAttr = particles.geometry.attributes.position;
+        for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
+            posAttr.array[i] += velocities[i];
+            velocities[i] *= 0.95; // Friction to slow down movement
+        }
+        posAttr.needsUpdate = true;
+
+        updateConnections();
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+</script>
+</body>
+</html>

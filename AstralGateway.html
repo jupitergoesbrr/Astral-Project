@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Astral Gateway is a completely unblockable web proxy, built with speed and privacy in mind.">
+    <title>Astral Gateway</title>
+    <style>
+/* Import Poppins as a Google Sans alternative for environments where Google Sans isn't locally installed */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Google Sans', 'Product Sans', 'Poppins', sans-serif;
+  background-color: #000000;
+  background-image: radial-gradient(circle at 50% 0%, #1a021e 0%, #000000 70%);
+  color: #e8eaed;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  z-index: 0;
+  font-size: 17px;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.detail-text {
+  font-family: sans-serif;
+  font-weight: 400;
+}
+
+::placeholder {
+  color: rgba(255,255,255,0.5);
+  font-family: sans-serif;
+  font-weight: 400;
+  opacity: 1; 
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(80, 6, 92, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(80, 6, 92, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.search-containeraa {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.search-engine-dropdownaa {
+  position: absolute;
+  right: 23px;
+  top: -27px;
+  width: 56px;
+  height: 55px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #50065c;
+  backdrop-filter: blur(10px);
+  box-shadow: 0px 2px 10px rgba(80, 6, 92, 0.3);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  z-index: 2;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.search-engine-dropdownaa:hover {
+  background: rgba(80, 6, 92, 0.4);
+  transform: scale(1.05);
+}
+
+.search-engine-dropdownaa img {
+  width: 38px;
+  height: 38px;
+  pointer-events: none;
+}
+
+/* Canva-esque Dropdown Animations */
+@keyframes menuPop {
+  0% { opacity: 0; transform: translateY(-15px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdown-contentaa {
+  display: none;
+  position: absolute;
+  min-width: 250px;
+  z-index: 10;
+  bottom: 36px;
+  left: -78px;
+  border-radius: 10px;
+  padding: 0;
+}
+
+.dropdown-contentaa.show {
+  display: block;
+  animation: menuPop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.dropdown-contentaa .status-messageaa {
+  color: #f1f1f1;
+  padding: 14px 14px;
+  background: rgba(80, 6, 92, 0.8);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  font-size: 15px;
+  font-family: sans-serif;
+  font-weight: 400;
+}
+
+.dropdown-contentaa a {
+  color: #fff;
+  padding: 12px 12px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  font-weight: 400;
+  transition: background-color 0.2s;
+}
+
+.dropdown-contentaa a:hover {
+  background-color: rgba(80, 6, 92, 0.5);
+}
+
+.dropdown-contentaa a img {
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
+}
+
+.uptop-baraa {
+  background: rgba(10, 0, 15, 0.8);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid #50065c;
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  z-index: 2147483644;
+}
+
+.uptop-baraa .tabaa {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  color: #d9d9d9;
+  border-radius: 8px;
+  padding: 9px 10px;
+  margin-right: 9px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  width: 204px;
+  max-width: 204px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: sans-serif;
+  font-weight: 400;
+}
+
+.uptop-baraa .tabaa.activeaa {
+  background: rgba(80, 6, 92, 0.3);
+  border: 1px solid #50065c;
+  box-shadow: 0 0 10px rgba(80, 6, 92, 0.5);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.uptop-baraa .tabaa:hover:not(.activeaa) {
+  background: rgba(80, 6, 92, 0.2);
+}
+
+.uptop-baraa .tabaa .tab-nameaa {
+  flex-grow: 1;
+  margin-right: 5px;
+  margin-left: 3px;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+}
+
+.uptop-baraa .tabaa .close-btnaa {
+  font-size: 15px;
+  color: #aaa;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 2px;
+  transition: color 0.3s;
+}
+
+.uptop-baraa .tabaa .close-btnaa:hover {
+  color: #fff;
+}
+
+.uptop-baraa .add-tabaa {
+  font-size: 23px;
+  color: #50065c;
+  cursor: pointer;
+  margin-left: 5px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.uptop-baraa .add-tabaa:hover {
+  color: #a41dc0;
+  text-shadow: 0 0 10px #50065c;
+  transform: scale(1.1);
+}
+
+.browser-baraa {
+  display: flex;
+  align-items: center;
+  padding: 5px 15px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(80, 6, 92, 0.3);
+  z-index: 2147483644;
+}
+
+.browser-baraa button {
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  color: #a0a0a0;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.browser-baraa button:hover {
+  color: #fff;
+  text-shadow: 0 0 8px #50065c;
+  transform: translateY(-2px);
+}
+
+.browser-baraa .address-baraa {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #50065c;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+  padding: 5px 13px;
+  border-radius: 500px;
+  color: #e8eaed;
+  font-size: 14px;
+  margin-left: 5px;
+  margin-right: 18px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.browser-baraa .address-baraa:focus-within {
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 0 15px rgba(80, 6, 92, 0.4);
+}
+
+.browser-baraa .address-baraa input {
+  border: none;
+  width: 100%;
+  outline: none;
+  font-size: 15px;
+  font-family: sans-serif;
+  color: #fff;
+  background-color: transparent;
+}
+
+.browser-baraa .address-baraa .lock-iconaa {
+  color: #50065c;
+  margin-right: 10px;
+}
+
+.browser-baraa .address-baraa .official-caa {
+  color: #fff;
+  font-size: 14px;
+  font-family: sans-serif;
+  font-weight: 400;
+  background: rgba(80, 6, 92, 0.5);
+  height: 25px;
+  width: 100px;
+  text-align: center;
+  border-radius: 500px;
+  line-height: 25px;
+}
+
+/* Tab Content Transitions */
+@keyframes slideDropIn {
+  0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tab-contentaa {
+  display: none;
+  flex-grow: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  height: calc(100vh - 85px) !important;
+  background: transparent; 
+}
+
+.tab-contentaa.activeaa {
+  display: flex;
+  animation: slideDropIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.tab-contentaa h23 {
+  font-size: 72px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #fff, #50065c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(80, 6, 92, 0.5);
+}
+
+.tab-contentaa h21 {
+  font-size: 20px;
+  font-family: sans-serif;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 5px;
+  margin-bottom: 30px;
+}
+
+.search-baraa {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 30px;
+  width: 50%;
+  z-index: 1;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+}
+
+.search-baraa:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(80, 6, 92, 0.4);
+}
+
+.search-baraa input {
+  border: none;
+  width: 100%;
+  outline: none;
+  font-size: 18px;
+  background-color: transparent;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+.search-baraa i {
+  color: #50065c;
+  margin-right: 15px;
+  cursor: pointer;
+  transition: color 0.3s, text-shadow 0.3s;
+}
+
+.search-baraa i:hover {
+  color: #a41dc0;
+  text-shadow: 0 0 10px #50065c;
+}
+
+.Xt7Lm9Kp3R8f {
+  position: absolute;
+  top: 119px;
+  left: 20px;
+  height: 42px;
+  color: #fff;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  font-family: sans-serif;
+  font-weight: 400;
+  padding: 0px 14px;
+}
+
+.dropdown-menuccc {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 100px;
+  min-width: 160px;
+  z-index: 2147483646;
+  border-radius: 10px;
+}
+
+.dropdown-menuccc.showccc {
+  display: block;
+  animation: menuPop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.dropdown-menuccc a {
+  color: #e8eaed;
+  padding: 13px 17px;
+  text-decoration: none;
+  display: block;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+}
+
+.dropdown-menuccc a:hover {
+  background: rgba(80, 6, 92, 0.4);
+}
+
+.user-idff {
+  font-size: 14px;
+  font-family: sans-serif;
+  font-weight: 400;
+  color: rgba(255,255,255,0.6);
+  padding: 13px 18px;
+  background: rgba(0,0,0,0.5);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.sidebarvv {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100%;
+  color: #f8f8f2;
+  display: flex;
+  flex-direction: column;
+  padding-top: 115px;
+  padding-right: 20px;
+  padding-left: 20px;
+  border-right: 1px solid #50065c;
+}
+
+.sidebarvv h1 {
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #50065c;
+  padding-bottom: 10px;
+}
+
+.sidebarvv button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: #fff;
+  padding: 12px;
+  margin-bottom: 9px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: sans-serif;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sidebarvv button:hover {
+  background: rgba(80, 6, 92, 0.3);
+  transform: translateX(5px);
+}
+
+.sidebarvv button.active {
+  border: 1px solid #50065c;
+  background: rgba(80, 6, 92, 0.5);
+}
+
+.content-containervv {
+  margin-left: 296px;
+  padding: 40px;
+  flex: 1;
+  display: none;
+  font-family: sans-serif;
+  font-weight: 400;
+}
+
+.content-containervv.activevv {
+  display: block;
+  animation: slideDropIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.content-containervv h3 {
+  font-size: 25px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #50065c;
+  padding-bottom: 10px;
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 600;
+}
+
+.content-containervv button {
+  background: rgba(80, 6, 92, 0.6);
+  border: 1px solid #50065c;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.content-containervv button:hover {
+  background: rgba(80, 6, 92, 0.9);
+  box-shadow: 0 0 10px #50065c;
+}
+
+.square-buttonaa {
+  margin-top: 1px;
+  height: 32px;
+  padding: 0 10px;
+  background: rgba(80, 6, 92, 0.5);
+  border: 1px solid #50065c;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 9px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.square-buttonaa:hover {
+  background: #50065c;
+  box-shadow: 0 0 10px #50065c;
+  transform: scale(1.05);
+}
+
+.spinner {
+  position: absolute;
+  left: 9px;
+  top: 11px;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(80, 6, 92, 0.3);
+  border-radius: 50%;
+  border-top-color: #50065c;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  </head>
+  <body>
+    <div class="uptop-baraa">
+      <div class="tabaa activeaa">
+        <span class="tab-nameaa">New Tab</span>
+        <i class="fas fa-times close-btnaa"></i>
+      </div>
+      <div class="add-tabaa" title="Add tab" id="add-tabaa">
+        <i class="fa-solid fa-circle-plus"></i>
+      </div>
+    </div>
+    <div class="browser-baraa">
+      <button class="backward-buttonaa" title="Click to go back">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <button class="forward-buttonaa" title="Click to go forward">
+        <i class="fas fa-arrow-right"></i>
+      </button>
+      <button class="reload-buttonaa" title="Reload this page">
+        <i class="fas fa-redo"></i>
+      </button>
+      <button class="home-buttonaa" title="Shortcut to astral://start">
+        <i class="fas fa-home"></i>
+      </button>
+      <div class="address-baraa">
+        <i class="fas fa-lock lock-iconaa"></i>
+        <input type="text" placeholder="Enter a URL" value="astral://start" id="url-baraa">
+        <div class="official-caa">
+          <i class="fa-solid fa-circle-check officialaa">&nbsp;Official</i>
+        </div>
+      </div>
+      <button class="fullscreen-button" title="Enter fullscreen" onclick="toggleFullscreen()">
+        <i class="fas fa-expand"></i>
+      </button>
+      <button class="settings-buttonaa" title="Shortcut to astral://settings">
+        <i class="fas fa-cog"></i>
+      </button>
+      <button class="menu-buttonaa" title="More options" onclick="toggleDropdownccc()">⋮</button>
+      
+      <div id="myDropdownccc" class="dropdown-menuccc glass-panel">
+        <a href="javascript:void(0);">New Tab</a>
+        <a href="javascript:void(0);" onclick="changeTabContent('astral://settings')">Astral Settings</a>
+        <a href="javascript:void(0);" onclick="changeTabContent('astral://urls')">Internal URLs</a>
+        <a href="javascript:void(0);" id="dataURL" onclick="generateDataURL()">Generate Session Data URL</a>
+        <div class="user-idff" id="user-idff">Your Session ID will appear here</div>
+      </div>
+    </div>
+    
+    <div class="contentaa tab-contentaa activeaa">
+      <div class="Xt7Lm9Kp3R8f glass-panel">
+        <p>Made by Jupiter</p>
+      </div>
+      
+      <h23>Astral Gateway</h23>
+      <h21>v1.0.0</h21>
+      
+      <div class="search-baraa glass-panel">
+        <div class="search-containeraa">
+          <div class="search-engine-dropdownaa" onclick="toggleDropdown(0)">
+            <img src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256" alt="Google" id="selected-engine-0">
+          </div>
+          <div class="dropdown-contentaa glass-panel" id="engineDropdown-0">
+            <div class="status-messageaa" id="statusMessage-0">Searching with Google</div>
+            <a href="javascript:void(0);" onclick="selectEngine('https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256', 'Google', 0)" data-engine="Google">
+              <img src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256" alt="Google"> &nbsp;Search with Google 
+            </a>
+            <a href="javascript:void(0);" onclick="selectEngine('https://www.bing.com/favicon.ico', 'Bing', 0)" data-engine="Bing">
+              <img src="https://www.bing.com/favicon.ico" alt="Bing"> &nbsp;Search with Bing 
+            </a>
+            <a href="javascript:void(0);" onclick="selectEngine('https://duckduckgo.com/favicon.ico', 'DuckDuckGo', 0)" data-engine="DuckDuckGo">
+              <img src="https://duckduckgo.com/favicon.ico" alt="DuckDuckGo"> &nbsp;Search with DuckDuckGo 
+            </a>
+          </div>
+        </div>
+        <input type="text" placeholder="Search the web or enter a URL [Ctrl + K]" id="search-input-0">
+        <i class="fas fa-search search-iconaa"></i>
+      </div>
+    </div>
+
+    <script>
+let currentTabIndex = 0;
+const trustedSchemes = ['astral://', 'https://', 'http://'];
+
+const tabs = [{
+    url: 'astral://start',
+    content: `<div class="Xt7Lm9Kp3R8f glass-panel">
+  <p>Made by Jupiter</p>
+</div>
+        <h23>Astral Gateway</h23>
+        <h21>v1.0.0</h21>
+        <div class="search-baraa glass-panel">
+          <div class="search-containeraa">
+  <div class="search-engine-dropdownaa" onclick="toggleDropdown(\${currentTabIndex})">
+    <img src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256" alt="Google" id="selected-engine-\${currentTabIndex}">
+  </div>
+  <div class="dropdown-contentaa glass-panel" id="engineDropdown-\${currentTabIndex}">
+    <div class="status-messageaa" id="statusMessage-\${currentTabIndex}">Searching with Google</div>
+    <a href="javascript:void(0);" onclick="selectEngine('https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256', 'Google', \${currentTabIndex})" data-engine="Google">
+      <img src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256" alt="Google"> &nbsp;Search with Google
+    </a>
+    <a href="javascript:void(0);" onclick="selectEngine('https://www.bing.com/favicon.ico', 'Bing', \${currentTabIndex})" data-engine="Bing">
+      <img src="https://www.bing.com/favicon.ico" alt="Bing"> &nbsp;Search with Bing
+    </a>
+    <a href="javascript:void(0);" onclick="selectEngine('https://duckduckgo.com/favicon.ico', 'DuckDuckGo', \${currentTabIndex})" data-engine="DuckDuckGo">
+      <img src="https://duckduckgo.com/favicon.ico" alt="DuckDuckGo"> &nbsp;Search with DuckDuckGo
+    </a>
+  </div>
+</div>
+            <input type="text" placeholder="Search the web or enter a URL [Ctrl + K]" id="search-input-\${currentTabIndex}">
+            <i class="fas fa-search search-iconaa"></i></div>`
+}];
+
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("Astral Gateway Started");
+    initializeTabs();
+});
+
+// Listen for Ctrl + K
+window.addEventListener('keydown', function(event) {
+  if (event.ctrlKey && event.key === 'k') {
+    event.preventDefault();  
+    const searchInput = document.querySelector('.search-baraa input');
+    if (searchInput) searchInput.focus();
+  }
+});
+
+function initializeTabs() {
+    const originalTab = document.querySelector('.tabaa');
+    originalTab.remove();
+    document.querySelectorAll('.tab-contentaa')[0].remove();
+    tabs.shift();
+
+    createNewTab();
+}
+
+function createNewTab() {
+    const newTabIndex = tabs.length;
+    const newTab = document.createElement('div');
+    newTab.className = 'tabaa';
+    newTab.innerHTML = `<span class="tab-nameaa">New Tab</span><i class="fas fa-times close-btnaa"></i>`;
+    document.querySelector('.uptop-baraa').insertBefore(newTab, document.getElementById('add-tabaa'));
+
+    const newContent = document.createElement('div');
+    newContent.className = 'contentaa tab-contentaa';
+    
+    // Default Tab
+    newContent.innerHTML = `<div class="Xt7Lm9Kp3R8f glass-panel"><p>Made by Jupiter</p></div>
+        <h23>Astral Gateway</h23>
+        <h21>v1.0.0</h21>
+        <div class="search-baraa glass-panel">
+          <div class="search-containeraa">
+            <div class="search-engine-dropdownaa" onclick="toggleDropdown(${newTabIndex})">
+              <img src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256" alt="Google" id="selected-engine-${newTabIndex}">
+            </div>
+            <div class="dropdown-contentaa glass-panel" id="engineDropdown-${newTabIndex}">
+              <div class="status-messageaa" id="statusMessage-${newTabIndex}">Searching with Google</div>
+              <a href="javascript:void(0);" onclick="selectEngine('https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256', 'Google', ${newTabIndex})"><img src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=256" alt="Google"> &nbsp;Search with Google</a>
+            </div>
+          </div>
+          <input type="text" placeholder="Search the web or enter a URL [Ctrl + K]" id="search-input-${newTabIndex}">
+          <i class="fas fa-search search-iconaa"></i>
+        </div>`;
+        
+    document.body.appendChild(newContent);
+
+    tabs.push({
+        url: 'astral://start',
+        content: newContent.innerHTML
+    });
+
+    updateActiveTab(newTab, newContent, newTabIndex);
+    addCloseButtonFunctionality(newTab);
+    addTabClickListener(newTab, newContent, newTabIndex);
+}
+
+document.getElementById('add-tabaa').addEventListener('click', createNewTab);
+
+function addCloseButtonFunctionality(tab) {
+    tab.querySelector('.close-btnaa').addEventListener('click', function(event) {
+        event.stopPropagation();
+        closeTab(tab);
+    });
+}
+
+function closeTab(tab) {
+    const index = Array.from(document.querySelectorAll('.tabaa')).indexOf(tab);
+    tab.remove();
+    document.querySelectorAll('.tab-contentaa')[index].remove();
+    tabs.splice(index, 1);
+
+    if (index === currentTabIndex) {
+        if (index > 0) {
+            currentTabIndex = index - 1;
+        } else if (tabs.length > 0) {
+            currentTabIndex = 0;
+        } else {
+            createNewTab();
+            return;
+        }
+        const newActiveTab = document.querySelectorAll('.tabaa')[currentTabIndex];
+        const newActiveContent = document.querySelectorAll('.tab-contentaa')[currentTabIndex];
+        updateActiveTab(newActiveTab, newActiveContent, currentTabIndex);
+    } else if (index < currentTabIndex) {
+        currentTabIndex--;
+    }
+}
+
+function addTabClickListener(tab, content, index) {
+    tab.addEventListener('click', function() {
+        updateActiveTab(tab, content, index);
+    });
+}
+
+function updateActiveTab(tab, content, index) {
+    document.querySelectorAll('.tab-contentaa').forEach(c => c.classList.remove('activeaa'));
+    document.querySelectorAll('.tabaa').forEach(t => t.classList.remove('activeaa'));
+
+    tab.classList.add('activeaa');
+    content.classList.add('activeaa');
+
+    currentTabIndex = index;
+    const url = tabs[index].url;
+    document.getElementById('url-baraa').value = url;
+    updateLockIcon(url);
+    updateSpecialDivs(url);
+}
+
+function updateTabContent(url, content, tab) {
+    const index = Array.from(document.querySelectorAll('.tabaa')).indexOf(tab);
+    showSpinner(tab);
+
+    if (url === 'astral://start') {
+        content.innerHTML = tabs[0].content.replace(/\${currentTabIndex}/g, index);
+        tab.querySelector('.tab-nameaa').textContent = 'New Tab';
+    } else if (url === 'astral://settings') {
+        content.innerHTML = `
+        <div class="sidebarvv glass-panel">
+          <h1>Astral Settings</h1>
+          <button class="active" onclick="showCategory('historyvv')">History</button>
+          <button onclick="showCategory('cloakingvv')">Cloaking</button>
+        </div>
+        <div class="content-containervv activevv glass-panel" id="historyvv" style="margin-top: 100px; border-radius: 12px; margin-right: 40px;">
+          <h3>Manage History</h3>
+          <button id="clear-history">Clear History</button>
+          <div style="display:none; color:#a41dc0; margin-top:10px;" id="cleared-message">History cleared!</div>
+        </div>
+        <div class="content-containervv glass-panel" id="cloakingvv" style="margin-top: 100px; border-radius: 12px; margin-right: 40px;">
+          <h3>Tab Cloaking Options</h3>
+          <button onclick="openInAboutBlank()">Open in about:blank</button>
+          <button onclick="openInBlob()">Open in blob:</button>
+        </div>`;
+        tab.querySelector('.tab-nameaa').textContent = 'Astral Settings';
+        
+        // Attach listener for clear history
+        setTimeout(() => {
+            document.getElementById('clear-history').addEventListener('click', () => {
+                localStorage.clear();
+                sessionStorage.clear();
+                const msg = document.getElementById('cleared-message');
+                msg.style.display = 'block';
+                setTimeout(() => msg.style.display = 'none', 3000);
+            });
+        }, 100);
+        
+    } else if (url === 'astral://urls') {
+        content.innerHTML = `
+        <div class="glass-panel" style="padding: 40px; border-radius: 12px; margin-top: 50px;">
+          <h2 style="font-size: 32px; margin-bottom: 20px; border-bottom: 1px solid #50065c;">Astral Internal URLs</h2>
+          <ul style="list-style-type: none; padding: 0; text-align:left;">
+              <li style="margin-bottom: 15px;">
+                  <a href="javascript:void(0);" onclick="changeTabContent('astral://start')" style="font-size: 20px; color: #a41dc0; text-decoration: none;">astral://start</a>
+                  <p class="detail-text" style="margin: 5px 0 0 0; color: rgba(255,255,255,0.7);">Start page</p>
+              </li>
+              <li style="margin-bottom: 15px;">
+                  <a href="javascript:void(0);" onclick="changeTabContent('astral://settings')" style="font-size: 20px; color: #a41dc0; text-decoration: none;">astral://settings</a>
+                  <p class="detail-text" style="margin: 5px 0 0 0; color: rgba(255,255,255,0.7);">Settings page</p>
+              </li>
+              <li style="margin-bottom: 15px;">
+                  <a href="javascript:void(0);" onclick="changeTabContent('astral://urls')" style="font-size: 20px; color: #a41dc0; text-decoration: none;">astral://urls</a>
+                  <p class="detail-text" style="margin: 5px 0 0 0; color: rgba(255,255,255,0.7);">List of internal URLs</p>
+              </li>
+          </ul>
+        </div>`;
+        tab.querySelector('.tab-nameaa').textContent = 'Astral URLs';
+    } else {
+        fetchExternalContent(url, content, index);
+    }
+
+    tabs[index].url = url;
+    
+    // Only update the physical URL bar if this is the active tab
+    if (currentTabIndex === index) {
+        document.getElementById('url-baraa').value = url;
+        updateLockIcon(url);
+        updateSpecialDivs(url);
+    }
+    
+    if (url.startsWith('astral://')) {
+        hideSpinner(tab);
+    }
+}
+
+function showCategory(categoryId) {
+    document.querySelectorAll('.content-containervv').forEach(c => c.classList.remove('activevv'));
+    document.getElementById(categoryId).classList.add('activevv');
+    document.querySelectorAll('.sidebarvv button').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.sidebarvv button[onclick="showCategory('${categoryId}')"]`).classList.add('active');
+}
+
+function changeTabContent(url) {
+    const currentTab = document.querySelectorAll('.tabaa')[currentTabIndex];
+    const currentContent = document.querySelectorAll('.tab-contentaa')[currentTabIndex];
+    if (currentTab && currentContent) {
+        updateTabContent(url, currentContent, currentTab);
+    }
+}
+
+document.querySelector('.home-buttonaa').addEventListener('click', () => changeTabContent('astral://start'));
+document.querySelector('.settings-buttonaa').addEventListener('click', () => changeTabContent('astral://settings'));
+
+// Pass top bar inputs to the smart SearchOrNavigation handler to fix Google appending https://
+document.getElementById('url-baraa').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        handleSearchOrNavigation(e.target.value, currentTabIndex);
+    }
+});
+
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('search-iconaa')) {
+        const inputElem = event.target.closest('.search-baraa').querySelector('input');
+        if(inputElem) handleSearchOrNavigation(inputElem.value, currentTabIndex);
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && event.target.id.startsWith('search-input-')) {
+        const tabIndex = parseInt(event.target.id.split('-')[2]);
+        handleSearchOrNavigation(event.target.value, tabIndex);
+    }
+});
+
+function handleSearchOrNavigation(input, tabIndex) {
+    let url = input.trim();
+    if (!url) return;
+
+    // Smart logic to detect if it's a raw search or a URL
+    if (!input.includes(' ') && /^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+[/#?]?.*$/.test(url)) {
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        changeTabContent(url);
+    } else {
+        const engineImg = document.getElementById(`selected-engine-${tabIndex}`);
+        const engineAlt = engineImg ? engineImg.alt : 'Google';
+        let searchUrl = '';
+
+        switch(engineAlt) {
+            case 'Bing': searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(input)}`; break;
+            case 'DuckDuckGo': searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(input)}`; break;
+            default: searchUrl = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+        }
+        changeTabContent(searchUrl);
+    }
+}
+
+async function fetchExternalContent(url, content, tabIndex) {
+    const tab = document.querySelectorAll('.tabaa')[tabIndex];
+    
+    // Utilize multiple proxies to prevent silent failures (like AllOrigins breaking on Google searches)
+    const proxies = [
+        `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
+
+    let htmlText = null;
+    for (const proxy of proxies) {
+        try {
+            const response = await fetch(proxy);
+            if (response.ok) {
+                htmlText = await response.text();
+                break;
+            }
+        } catch (err) {
+            console.warn('Proxy failed:', proxy);
+        }
+    }
+
+    if (!htmlText) {
+        content.innerHTML = `<div class="glass-panel" style="padding: 20px; color: #fff; margin: auto; border-radius: 10px;"><h3>Error loading content</h3><p class="detail-text">Failed to fetch the requested URL. Please try again or check the URL.</p></div>`;
+        hideSpinner(tab);
+        return;
+    }
+    
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        tab.querySelector('.tab-nameaa').textContent = doc.title || 'Untitled';
+        
+        const shadowContainer = document.createElement('div');
+        shadowContainer.style.width = '100%';
+        shadowContainer.style.height = '100%';
+        shadowContainer.style.overflow = 'auto';
+        shadowContainer.style.backgroundColor = '#fff'; // Standard web background for iframes/shadow dom
+        
+        const shadowRoot = shadowContainer.attachShadow({ mode: 'open' });
+        shadowRoot.innerHTML = htmlText;
+
+        // Fix Bug 2: Intercept internal clicks so the URL bar physically updates when you navigate within the proxy
+        shadowRoot.querySelectorAll('a').forEach(anchor => {
+            anchor.addEventListener('click', (event) => {
+                event.preventDefault();
+                let href = anchor.getAttribute('href');
+                if (href && !href.startsWith('javascript:')) {
+                    try {
+                        const newUrl = new URL(href, url).href;
+                        updateTabContent(newUrl, content, tab);
+                    } catch(e) {
+                        console.error('Failed to parse URL:', e);
+                    }
+                }
+            });
+        });
+        
+        content.innerHTML = '';
+        content.appendChild(shadowContainer);
+        hideSpinner(tab);
+    } catch (err) {
+        content.innerHTML = `<div class="glass-panel" style="padding: 20px; color: #fff; margin: auto; border-radius: 10px;"><h3>Error parsing content</h3><p class="detail-text">${err.message}</p></div>`;
+        hideSpinner(tab);
+    }
+}
+
+function showSpinner(tabElement) {
+    let tabName = tabElement.querySelector('.tab-nameaa');
+    if (!tabName.querySelector('.spinner')) {
+        let spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        tabName.insertBefore(spinner, tabName.firstChild);
+    }
+}
+
+function hideSpinner(tabElement) {
+    let spinner = tabElement.querySelector('.spinner');
+    if (spinner) spinner.remove();
+}
+
+function updateLockIcon(url) {
+    const lockIcon = document.querySelector('.lock-iconaa');
+    if (trustedSchemes.some(scheme => url.startsWith(scheme))) {
+        lockIcon.className = 'fas fa-lock lock-iconaa';
+        lockIcon.style.color = '#50065c';
+    } else {
+        lockIcon.className = 'fas fa-unlock lock-iconaa';
+        lockIcon.style.color = '#a0a0a0';
+    }
+}
+
+function updateSpecialDivs(url) {
+    const isAstralURL = url.startsWith('astral://');
+    const officialC = document.querySelector('.official-caa');
+    if (officialC) {
+        officialC.style.opacity = isAstralURL ? '1' : '0';
+    }
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else if (document.exitFullscreen) document.exitFullscreen();
+}
+
+function toggleDropdownccc() {
+    document.getElementById("myDropdownccc").classList.toggle("showccc");
+}
+
+function toggleDropdown(index) {
+    const dropdown = document.getElementById(`engineDropdown-${index}`);
+    if (dropdown) dropdown.classList.toggle('show');
+}
+
+function selectEngine(iconSrc, engineName, index) {
+    const engineImg = document.getElementById(`selected-engine-${index}`);
+    const statusMsg = document.getElementById(`statusMessage-${index}`);
+    if(engineImg) {
+        engineImg.src = iconSrc;
+        engineImg.alt = engineName;
+    }
+    if(statusMsg) statusMsg.textContent = "Searching with " + engineName;
+    toggleDropdown(index);
+}
+
+window.onclick = function(event) {
+    if (!event.target.matches('.menu-buttonaa')) {
+        var dropdowns = document.getElementsByClassName("dropdown-menuccc");
+        for (var i = 0; i < dropdowns.length; i++) {
+            if (dropdowns[i].classList.contains('showccc')) dropdowns[i].classList.remove('showccc');
+        }
+    }
+    if (!event.target.closest('.search-engine-dropdownaa')) {
+        var dropContents = document.querySelectorAll('.dropdown-contentaa');
+        dropContents.forEach(d => d.classList.remove('show'));
+    }
+}
+
+function generateUserID() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = 'Session ID: ';
+    for(let i=0; i<10; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
+    document.getElementById('user-idff').textContent = id;
+}
+generateUserID();
+
+// Add square button
+const squareButton = document.createElement('div');
+squareButton.className = 'square-buttonaa';
+squareButton.textContent = '×';
+squareButton.title = 'Reset Tabs';
+document.querySelector('.uptop-baraa').prepend(squareButton);
+squareButton.addEventListener('click', () => {
+    const tabsList = document.querySelectorAll('.tabaa');
+    for (let i = tabsList.length - 1; i > 0; i--) closeTab(tabsList[i]);
+    changeTabContent('astral://start');
+});
+
+// Cloaking logic (simplified)
+function openInAboutBlank() {
+    const newWindow = window.open('about:blank', '_blank');
+    newWindow.document.write(document.documentElement.outerHTML);
+    newWindow.document.close();
+}
+async function openInBlob() {
+    const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
+}
+    </script>
+  </body>
+</html>
