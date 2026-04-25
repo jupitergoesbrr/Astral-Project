@@ -1,62 +1,945 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shooym Games</title>
-    <style>
-        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; }
-        #game-container { width: 100vw; height: 100vh; overflow: auto; }
-        .error { padding: 20px; color: #ff6b6b; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shooym</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* -------------------------
+       Base & CSS variables
+       ------------------------- */
+    :root{
+      --bg: #020212;
+      --bg-2: #05021a;
+      --accent-1: #6e00ff;
+      --accent-2: #009dff;
+      --glow-main: rgba(120,80,255,0.12);
+      --grid-primary: rgba(110,80,255,0.06);
+      --grid-secondary: rgba(0,160,255,0.03);
+      --orb-1: radial-gradient(circle,#4b5bff 0%, rgba(75,91,255,0.05) 55%);
+      --orb-2: radial-gradient(circle,#9b6dff 0%, rgba(155,109,255,0.05) 55%);
+      --orb-3: radial-gradient(circle,#2ea6ff 0%, rgba(46,166,255,0.04) 55%);
+      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      --card-border: rgba(120,80,255,0.08);
+      --title-grad: linear-gradient(90deg,var(--accent-1),var(--accent-2),var(--accent-1));
+      --btn-alt-bg: linear-gradient(90deg,#4b5bff55,#7c52ff33);
+      --btn-shadow: 0 6px 18px rgba(40,10,60,0.35);
+      --note: #9aa7ff99;
+      --subtitle: #bfc5ffcc;
+      --footer: #9fa8ff77;
+      --contrast-text: #eef6ff;
+      --text-color: #eef6ff;
+      --transition-fast: 350ms;
+      --transition-slow: 900ms;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family:"Poppins",system-ui,Arial; background:var(--bg); color:var(--text-color); overflow-x:hidden; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    a{ color:inherit; }
+
+    canvas#grid, canvas#particles { position:fixed; inset:0; z-index:0; display:block; pointer-events:none; }
+
+    body::before{
+      content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+      background: radial-gradient(circle at var(--x,50%) var(--y,50%), var(--glow-main), transparent 35%);
+      transition:background 80ms linear;
+      mix-blend-mode: screen;
+    }
+
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); mix-blend-mode:screen; z-index:1; pointer-events:none; opacity:0.95; transform:translateZ(0); }
+    .orb.orb-1{ width:360px;height:360px; top:4%; left:4%; background:var(--orb-1); animation:orbFloat1 9s ease-in-out infinite; }
+    .orb.orb-2{ width:320px;height:320px; right:6%; top:36%; background:var(--orb-2); animation:orbFloat2 13s ease-in-out infinite; }
+    .orb.orb-3{ width:260px;height:260px; left:42%; bottom:6%; background:var(--orb-3); animation:orbFloat3 11s ease-in-out infinite; }
+    @keyframes orbFloat1{0%{transform:translateY(0)}50%{transform:translateY(-48px)}100%{transform:translateY(0)}}
+    @keyframes orbFloat2{0%{transform:translateY(0)}50%{transform:translateY(-64px)}100%{transform:translateY(0)}}
+    @keyframes orbFloat3{0%{transform:translateY(0)}50%{transform:translateY(-30px)}100%{transform:translateY(0)}}
+
+    .wrap { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:48px 20px 80px; gap:18px; transition:color var(--transition-fast) ease; }
+
+    .topbar { position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:6; display:flex; gap:10px; align-items:center; padding:8px; border-radius:12px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); backdrop-filter:blur(6px); box-shadow:var(--btn-shadow); transition:background var(--transition-fast); }
+    .theme-select { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.02); color:var(--contrast-text); font-weight:700; outline:none; cursor:pointer; }
+
+    h1{ margin:0; font-size:3.2rem; font-weight:700; letter-spacing:1px; background:var(--title-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-size:200% 100%; animation:gradMove 6s linear infinite; text-align:center; text-shadow:0 6px 30px rgba(30,10,60,0.45); transition:filter var(--transition-fast), transform var(--transition-fast); }
+    @keyframes gradMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .subtitle{ margin:6px 0 0; color:var(--subtitle); text-align:center; max-width:1100px; z-index:2; transition:color var(--transition-fast); }
+    .note { color:var(--note); text-align:center; margin:0; transition:color var(--transition-fast); }
+
+    .controls { margin-top:12px; display:flex; gap:12px; align-items:center; z-index:2; flex-wrap:wrap; justify-content:center; }
+    .btn { border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); color:var(--contrast-text); backdrop-filter:blur(6px); box-shadow:var(--btn-shadow); transition:transform .16s ease, box-shadow .16s ease, filter var(--transition-fast); }
+    .btn:active{ transform:translateY(1px) }
+    .btn.alt{ background:var(--btn-alt-bg); color:#fff; }
+
+    .game-buttons { width:100%; max-width:1400px; display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:34px; z-index:2; padding:8px; }
+
+    .game-card {
+      position:relative; overflow:hidden; cursor:pointer; border-radius:16px;
+      padding:18px; text-align:center; min-height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:var(--card-bg); box-shadow: 0 8px 30px rgba(20,10,60,0.35), inset 0 1px 0 rgba(255,255,255,0.02);
+      transition: transform 420ms cubic-bezier(.2,.9,.2,1), box-shadow 420ms ease, border-color 420ms ease, background 420ms ease;
+      border:1px solid var(--card-border);
+      transform:translateY(6px); opacity:0;
+      will-change:transform,opacity;
+    }
+    .game-card .thumb{ width:100px;height:100px;border-radius:12px;margin-bottom:12px; object-fit:cover; transition:transform 320ms ease; }
+    .game-card span{ display:block; font-weight:700; color:var(--contrast-text); font-size:0.98rem; text-shadow:0 3px 18px rgba(20,10,60,0.5); transition:color var(--transition-fast); }
+    .game-card:hover{ transform:translateY(-6px) scale(1.04); box-shadow:0 18px 60px rgba(70,40,200,0.22); border-color:rgba(120,80,255,0.26); }
+    .game-card:hover .thumb{ transform:scale(1.12); }
+
+    .game-card::after{ content:""; position:absolute; inset:-40% -20% auto -20%; height:120%; transform:skewX(-22deg) translateX(-120%); background:linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent); transition:transform .7s ease; pointer-events:none; }
+    .game-card:hover::after{ transform:skewX(-22deg) translateX(20%); }
+
+    .vip-panel { width:100%; max-width:1200px; margin:32px auto 18px; z-index:2; padding:20px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(120,80,255,0.06); box-shadow:0 16px 40px rgba(10,6,30,0.45); display:flex; flex-direction:column; gap:12px; align-items:center; }
+    .vip-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; width:100% }
+    .vip-input{ padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.02); color:var(--contrast-text); outline:none; min-width:220px }
+    
+    /* Search Bar Styling */
+    .search-bar {
+      padding: 10px 15px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--contrast-text);
+      outline: none;
+      width: 100%;
+      max-width: 400px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    .search-bar:focus {
+      border-color: var(--accent-1);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 15px var(--glow-main);
+    }
+
+    .toggle-label{ display:inline-flex; align-items:center; gap:8px; font-weight:700; color:#cfe3ffcc; cursor: pointer }
+    .small-note{ font-size:0.86rem; color:#aab6ff99 }
+    .vip-games{ display:none; width:100%; margin-top:14px; gap:18px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+
+    footer{ text-align:center; color:var(--footer); margin-top:40px; z-index:2; font-size:0.92rem; transition:color var(--transition-fast); }
+
+    @keyframes cardInUp { from{opacity:0; transform:translateY(30px)} to{opacity:1; transform:translateY(0)} }
+    @keyframes cardInLeft { from{opacity:0; transform:translateX(-40px) scale(.98)} to{opacity:1; transform:translateX(0) scale(1)} }
+    @keyframes cardInRight { from{opacity:0; transform:translateX(40px) scale(.98)} to{opacity:1; transform:translateX(0) scale(1)} }
+    @keyframes cardInPop { from{opacity:0; transform:scale(.85)} 60%{ transform:scale(1.05)} to{opacity:1; transform:scale(1)} }
+    @keyframes cardInRotate { from{opacity:0; transform:translateY(20px) rotateX(15deg)} to{opacity:1; transform:translateY(0) rotateX(0)} }
+    @keyframes cardInFade { from{opacity:0} to{opacity:1} }
+
+    /* per-theme body classes */
+    body.theme-electric .game-card { animation-name: cardInUp; animation-duration:520ms; animation-fill-mode:forwards; }
+    body.theme-inferno .game-card { animation-name: cardInLeft; animation-duration:620ms; animation-fill-mode:forwards; }
+    body.theme-cosmic .game-card { animation-name: cardInRight; animation-duration:720ms; animation-fill-mode:forwards; }
+    body.theme-void .game-card { animation-name: cardInPop; animation-duration:520ms; animation-fill-mode:forwards; }
+    body.theme-grove .game-card { animation-name: cardInRotate; animation-duration:640ms; animation-fill-mode:forwards; }
+    body.theme-frost .game-card { animation-name: cardInFade; animation-duration:520ms; animation-fill-mode:forwards; }
+    body.theme-chrono .game-card { animation-name: cardInUp; animation-duration:880ms; animation-fill-mode:forwards; }
+
+    .game-card:focus{ outline:2px solid rgba(255,255,255,0.06); transform:translateY(-6px); }
+    @media (max-width:720px){ h1{font-size:2rem} .game-card{min-height:140px} .thumb{width:86px;height:86px} .topbar{left:12px; transform:none} }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity var(--transition-fast) ease, visibility var(--transition-fast) ease; }
+    .modal-overlay.show { opacity: 1; visibility: visible; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 16px 50px rgba(0,0,0,0.5); border-radius: 16px; padding: 32px; max-width: 420px; width: 90%; text-align: center; transform: translateY(30px) scale(0.95); transition: transform var(--transition-fast) cubic-bezier(0.2, 0.9, 0.2, 1); }
+    .modal-overlay.show .modal-content { transform: translateY(0) scale(1); }
+    .modal-title { margin: 0 0 12px 0; font-size: 2rem; background: var(--title-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+    .modal-text { color: var(--subtitle); margin-bottom: 24px; font-size: 0.95rem; line-height: 1.5; }
+  </style>
 </head>
 <body>
+  <div id="announcementModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <h2 class="modal-title">Announcement!</h2>
+      <p class="modal-text">no Blake</p>
+      <button class="btn alt" onclick="closeAnnouncement()">I DONT CARE!</button>
+    </div>
+  </div>
 
-    <div id="game-container">Loading game assets...</div>
+  <canvas id="grid"></canvas>
+  <canvas id="particles"></canvas>
 
-    <script>
-        async function loadGame() {
-            const targetUrl = 'https://shooymgames.vercel.app/index.html';
-            const container = document.getElementById('game-container');
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
 
-            try {
-                const response = await fetch(targetUrl);
-                
-                if (!response.ok) throw new Error('Could not reach the game server.');
+  <div class="topbar" role="toolbar" aria-label="Theme toolbar">
+    <select id="themePicker" class="theme-select" aria-label="Select theme"></select>
+    <div style="font-size:0.85rem;color:var(--subtitle);" id="themeLabel">Electric Pulse</div>
+    <div style="width:1px;height:28px;background:rgba(255,255,255,0.03)"></div>
+    <div style="font-size:0.82rem;color:var(--subtitle);padding:6px 8px;border-radius:8px">Press <strong>Shift + C</strong> to cycle</div>
+    <label style="margin-left:8px;font-size:0.82rem;color:var(--subtitle);display:flex;align-items:center;gap:8px">
+      <input id="autoToggle" type="checkbox" checked /> auto-hourly
+    </label>
+  </div>
 
-                let html = await response.text();
+  <div class="wrap" role="main" aria-label="Shooym game hub">
+    <h1>Shooym's Games</h1>
+    <p class="subtitle">꧁∞꧂</p>
+    <p class="note">Some of the games may take a while to load. Click a card to play.</p>
 
-                // FIX: Inject the <base> tag so relative paths (images/scripts) work
-                const baseTag = `<base href="https://shooymgames.vercel.app/">`;
-                
-                // We insert the base tag right after the <head> starts
-                if (html.includes('<head>')) {
-                    html = html.replace('<head>', `<head>${baseTag}`);
-                } else {
-                    html = baseTag + html;
-                }
+    <div class="controls" role="region" aria-label="controls">
+      <button id="musicToggle" class="btn alt" title="Toggle background music">🔈 Music</button>
+      <div style="width:1px;height:24px;background:rgba(255,255,255,0.03)"></div>
+      <input id="gameSearch" type="text" placeholder="Search for a game..." class="search-bar" oninput="filterGames()" />
+    </div>
 
-                container.innerHTML = html;
+    <div class="game-buttons" id="publicGames" aria-live="polite">
+      <div class="game-card" onclick="openGame('gamesuggestion.html')"><img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ66vH9wbKB3voFU5NzcB5ieHYUT7vGOjrHHQ&s" alt="RFE" /><span>tell me what to do with the website!</span></div>
+       <div class="game-card" onclick="openGame('ai.html')"><img class="thumb" src="https://image2url.com/r2/default/images/1774532381616-6e641162-f204-43e4-bebc-65bf4c986b2f.png" alt="BEEF.AI" /><span>BEEF.AI</span></div>
+       <div class="game-card" onclick="openGame('download.html')"><img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRi7vaKzMEv5lSP5PYCyMs-l13ZFqSoyEWrYg&s" alt="Download" /><span>Download The Site As An HTML FILE</span></div>
+      <div class="game-card" onclick="openGame('proxy.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5M-dl8KfA1-cwCKH9GwdUkuCxY0tGk89fRA&s" alt="proxy" />
+  <span>Proxy List</span>
+</div>
+      <div class="game-card" onclick="openGame('color.html')">
+  <img class="thumb" src="https://i.ibb.co/p67vSGnp/Screenshot-2026-03-30-9-13-48-AM.png" alt="Color Memory" />
+  <span>Color Memory</span>
+</div>
+      <div class="game-card" onclick="openGame('shooymcord.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIOoHvtnCBHVjlAtAugEWrtxto32v-vplb7Q&s" alt="Shooym Cord" />
+  <span>Shooym Cord</span>
+</div>
+      <div class="game-card" onclick="openGame('Jaydathan_Cubefield.html')">
+  <img class="thumb" src="https://i.ibb.co/JjTQk8j8/Screenshot-2026-04-24-10-04-32-AM.png" alt="Jaydathan Cubefield" />
+  <span>Jaydathan Cubefield</span>
+</div>
+      <div class="game-card" onclick="openGame('Awesome_Tanks_2.html')"><img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/438.png" alt="RFE" /><span>Play Awesome Tanks 2!!</span></div>
+      <div class="game-card" onclick="openGame('Famidash.html')"><img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/735.png" alt="DO THIS" /><span>Play FamiDash!</span></div>
+<div class="game-card" onclick="openGame('Roulette_Hero.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/720.png" alt="Roulette Hero" />
+  <span>Roulette Hero</span>
+</div>
+<div class="game-card" onclick="openGame('Station_Saturn.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/453.png" alt="Station Saturn" />
+  <span>Station Saturn</span>
+</div>
+<div class="game-card" onclick="openGame('Station_141.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/452.png" alt="Station 141" />
+  <span>Station 141</span>
+</div>
+<div class="game-card" onclick="openGame('State.io.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/161.png" alt="State.io" />
+  <span>State.io</span>
+</div>
+<div class="game-card" onclick="openGame('Survivor.io.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/709.png" alt="Survivor.io" />
+  <span>Survivor.io</span>
+</div>
+<div class="game-card" onclick="openGame('Swordfight!!.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/513.png" alt="Swordfight!!" />
+  <span>Swordfight!!</span>
+</div>
+<div class="game-card" onclick="openGame('Slime_Rancher.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/591.png" alt="Slime Rancher" />
+  <span>Slime Rancher</span>
+</div>
+<div class="game-card" onclick="openGame('That's_Not_My_Neighbor.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/216.png" alt="That's Not My Neighbor" />
+  <span>That's Not My Neighbor</span>
+</div>
+<div class="game-card" onclick="openGame('Five_Nights_at_Epstein's.html')">
+  <img class="thumb" src="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/710.png" alt="Five Nights at Epstein's" />
+  <span>Five Nights at Epstein's</span>
+</div>
+<div class="game-card" onclick="openGame('cl10minutestildawn.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSyQK9rap1c3MKt8leanZhcedn2yq5ykNvzMQ&s" alt="10 minutes til dawn" />
+  <span>10 Minutes Til Dawn</span>
+</div>
+<div class="game-card" onclick="openGame('cl2048.html')">
+  <img class="thumb" src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=1200,height=1200,fit=cover,f=png/cb8c967c-4a78-4ffa-8506-cbac69746f4f/2048.png" alt="2048" />
+  <span>2048</span>
+</div>
+<div class="game-card" onclick="openGame('cl8ballclassic.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiRqgZWY5KhZBmJbxOTEq3o-TQ6N793IMknA&s" alt="8 ball classic" />
+  <span>8 Ball Classic</span>
+</div>
+<div class="game-card" onclick="openGame('clasmallworldcup.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAK3BGGGWOJnSkw-TdcyjCJHM3PNsElr5piw&s" alt="a small world cup" />
+  <span>A Small World Cup</span>
+</div>
+<div class="game-card" onclick="openGame('clragdollarchers.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbxYlC6Lcyiv7EZgxn633B0_yCU6PGswbXSw&s" alt="ragdoll archers" />
+  <span>Ragdoll Archers</span>
+</div>
+<div class="game-card" onclick="openGame('clslowroads.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3mKGIWQYPxsWftKkGhUCzR2Bsm_CVqMnQYw&s" alt="slow roads" />
+  <span>Slow Roads</span>
+</div>
+<div class="game-card" onclick="openGame('clstickwar.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFUCxvg9QjuYDjoRd6WJbSHfQsImen10e3AA&s" alt="stick war" />
+  <span>Stick War</span>
+</div>
+<div class="game-card" onclick="openGame('clmonkeymart.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnFLj-kzBHlnUSjUopreqhemo1SP_MSLJYRg&s" alt="monkey mart" />
+  <span>Monkey Mart</span>
+</div>
+<div class="game-card" onclick="openGame('clreachthecore.html')">
+  <img class="thumb" src="https://i.ytimg.com/vi/bZaatWtZjoM/maxresdefault.jpg" alt="reach the core" />
+  <span>Reach The Core</span>
+</div>
+<div class="game-card" onclick="openGame('clrun3.html')">
+  <img class="thumb" src="https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/d3c19e9b-9b7b-4a54-9cb5-6188a5bd7d3b/run-3.png" alt="run 3" />
+  <span>Run 3</span>
+</div>
+<div class="game-card" onclick="openGame('clcrossyroad.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeJcBRv9JpYYh9-fSR3GE26i4AmXtPCKamrA&s" alt="crossy road" />
+  <span>Crossy Road</span>
+</div>
+<div class="game-card" onclick="openGame('cljacksmithencryptedorsmthn.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmmOarynQB-XUvnN7Txv2dYAO7E9Bkri6eWA&s" alt="jacksmith" />
+  <span>Jacksmith</span>
+</div>
+<div class="game-card" onclick="openGame('Diddy.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4MB26v-WF5SVulBK6p7n2q3rZzBlvnCq0gQ&s" alt="Diddy" />
+  <span>Diddy</span>
+</div>
+<div class="game-card" onclick="openGame('clsilenthill.html')">
+  <img class="thumb" src="https://m.media-amazon.com/images/M/MV5BYTczZmZlZmEtODU4ZS00YzgzLThiMDUtMGE0ZmJhYzdhZGY5XkEyXkFqcGc@._V1_.jpg" alt="Silent Hill" />
+  <span>Silent Hill</span>
+</div>
+<div class="game-card" onclick="openGame('clgta22.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjZx_yfPtnxrBIXZNe_bdnOCfdAQxZI3WTmQ&s" alt="GTA 2" />
+  <span>GTA 2</span>
+</div>
+<div class="game-card" onclick="openGame('clspidermanps1.html')">
+  <img class="thumb" src="https://m.media-amazon.com/images/I/51DwYf-T-vL._AC_UF1000,1000_QL80_.jpg" alt="Spiderman" />
+  <span>Spiderman</span>
+</div>
+<div class="game-card" onclick="openGame('clpersona2.html')">
+  <img class="thumb" src="https://m.media-amazon.com/images/M/MV5BM2JiZTVlZjAtZDg3ZC00Y2Q2LTg5MzItODQxYzRjYzVmZmMwXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg" alt="Persona 2" />
+  <span>Persona 2</span>
+</div>
+<div class="game-card" onclick="openGame('clpersona.html')">
+  <img class="thumb" src="https://m.media-amazon.com/images/I/61DD23vN0yL.jpg" alt="Persona" />
+  <span>Persona</span>
+</div>
+<div class="game-card" onclick="openGame('The_Man_In_The_Window.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGLsiBcE8vsPGva5k2ZFhN0QQ6o3aE0RgvQw&s" alt="The Man In The Window" />
+  <span>The Man In The Window</span>
+</div>
+<div class="game-card" onclick="openGame('Territorial.io.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoR7QLlGHj0Qj4F4xsxK-bbhur2_sFT9_Pfw&s" alt="Territorial.io" />
+  <span>Territorial.io</span>
+</div>
+<div class="game-card" onclick="openGame('Raft.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2CmLBr7ObpwYH1ii9yYseVqGLDyFMzTbcTGUZ36vnhq3HgSB-E74D9cRe7YO0MsLKwXnu&s=10" alt="Raft" />
+  <span>Raft</span>
+</div>
+<div class="game-card" onclick="openGame('Nazi_Zombies__Portable.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNQGknQh9KsNHWINFoTMeyp4cb4WtV12CaoQ&s" alt="Nazi Zombies_ Portable" />
+  <span>Nazi Zombies_ Portable</span>
+</div>
+<div class="game-card" onclick="openGame('Highway_Racer_2.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIHgQwU4A22XR4rjnRxhEh-c0Nq9EyODw0qQ&s" alt="Highway Racer 2" />
+  <span>Highway Racer 2</span>
+</div>
+<div class="game-card" onclick="openGame('Happy_Wheels.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLgF9mL6Q5inX3ECubdXQ_zgWoYDs29NzpuZ5YBLdcv7LyHzDhm-iB086k9CYwr1Czq8kbhQ&s=10" alt="Happy Wheels" />
+  <span>Happy Wheels</span>
+</div>
+<div class="game-card" onclick="openGame('Granny_3.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_7uhqU10lCwZXaj72u0O41KplEoerhmdZmKuDYax5AHDBQ2IjStG9jkr72Bt8Ns4zwdpd&s=10" alt="Granny 3" />
+  <span>Granny 3</span>
+</div>
+<div class="game-card" onclick="openGame('Granny_2.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR2J3MvLFUofqeLM07km2AFutiJClyhF1_AZamB-tY2P_agnSmutmT6o6sQPjVQCVkZT9Nb&s=10" alt="Granny 2" />
+  <span>Granny 2</span>
+</div>
+<div class="game-card" onclick="openGame('Granny.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTwJxVW027dP4DwySYQiMoXTCRzy5knjvHzwIZLvYPnQItaJ0wH75kL7tWFDsAet5A23tbTHg&s=10" alt="Granny" />
+  <span>Granny</span>
+</div>
+<div class="game-card" onclick="openGame('Bloxorz.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStzp5wGWAdvOMF2F4zNr-lFKhq8uj7gYSJzBOjDkK_WTR9EAwsuROnmap4AH73DxooziOMHU1iT7nlpKb8wKFtrwWxublrxnfDB_ExjYc&s=10" alt="Bloxorz" />
+  <span>Bloxorz</span>
+</div>
+<div class="game-card" onclick="openGame('Kindergarten_3.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRU1ppigPq1U2RNWiYTUdJjisPxLfCgxJukg&s" alt="Kindergarten 3" />
+  <span>Kindergarten 3</span>
+</div>
+<div class="game-card" onclick="openGame('Kindergarten_2.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLV37RrGoBUbnVLqx8ln8QFSzZUQgN-mXmhg&s" alt="Kindergarten 2" />
+  <span>Kindergarten 2</span>
+</div>
+<div class="game-card" onclick="openGame('Kindergarten.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXerBXhasdy_7XlqPdDexd80FCBoBxjtnPPA&s" alt="Kindergarten" />
+  <span>Kindergarten</span>
+</div>
+<div class="game-card" onclick="openGame('Clover_Pit.html')">
+  <img class="thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3likm4J4vWxsE8EtlCnxP28oanhcIyj6plUlaVEmiDudNn4AZa8jeSWWgx1z6LG_ld1g8&s=10" alt="Clover Pit" />
+  <span>Clover Pit</span>
+</div>
+    </div>
 
-                // FIX: Scripts injected via innerHTML don't run automatically. 
-                // We need to manually find and execute them.
-                const scripts = container.querySelectorAll("script");
-                scripts.forEach(oldScript => {
-                    const newScript = document.createElement("script");
-                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                    oldScript.parentNode.replaceChild(newScript, oldScript);
-                });
 
-            } catch (error) {
-                container.innerHTML = `<div class="error">
-                    <p><strong>Error:</strong> ${error.message}</p>
-                    <p>Note: If you see a CORS error in the console, this method will not work without a proxy.</p>
-                </div>`;
-            }
+    <div class="vip-panel" role="region" aria-label="VIP settings">
+      <div style="text-align:center;width:100%;">
+        <h2 style="margin:0;color:#dfe7ff">VIP Games</h2>
+        <p class="small-note" style="margin:6px 0 10px 0">Enter VIP password to unlock the VIP games below.</p>
+      </div>
+      <div class="vip-row" style="width:100%;justify-content:center;">
+        <input id="vipPassword" class="vip-input" type="password" placeholder="VIP password" aria-label="VIP password" />
+        <button class="btn alt" onclick="unlockVIP()">Unlock VIP</button>
+        <div style="width:1px;height:28px;background:rgba(255,255,255,0.03)"></div>
+        <label class="toggle-label" title="Open VIP games in new window">
+          <input id="vipOpenNewWindow" type="checkbox" />
+          VIP open new window
+        </label>
+      </div>
+      
+      <div class="game-buttons vip-games" id="vipGames" aria-hidden="true">
+        </div>
+    </div>
+
+    <footer>© 2026 Shooym</footer>
+  </div>
+
+  <audio id="bgMusic" src="music" loop preload="auto"></audio>
+
+  <div id="gameOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:999999;display:none;">
+    <div id="loader" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;">Loading...</div>
+    <iframe id="gameFrame" style="width:100%;height:100%;border:none;"></iframe>
+  </div>
+
+  <script>
+    /***********************************************************
+     * THEME + UI SYSTEM
+     ***********************************************************/
+    const THEMES = [
+      {
+        id: 'electric', name: 'Electric Pulse',
+        vars:{
+          '--bg':'#0A0F25','--bg-2':'#05061a','--accent-1':'#00ffff','--accent-2':'#0080ff','--glow-main':'rgba(0,220,255,0.12)',
+          '--grid-primary':'rgba(0,140,255,0.06)','--grid-secondary':'rgba(0,200,255,0.03)',
+          '--orb-1':'radial-gradient(circle,#00ffff 0%, rgba(0,255,255,0.05) 55%)','--orb-2':'radial-gradient(circle,#0080ff 0%, rgba(0,128,255,0.05) 55%)','--orb-3':'radial-gradient(circle,#66f2ff 0%, rgba(0,200,255,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))','--card-border':'rgba(0,160,255,0.12)','--title-grad':'linear-gradient(90deg,#00ffff,#0080ff,#00ffff)','--btn-alt-bg':'linear-gradient(90deg,#00dfff55,#0080ff33)',
+          '--btn-shadow':'0 8px 26px rgba(0,120,180,0.18)','--note':'#9feeffbb','--subtitle':'#bffaffcc','--footer':'#9fefff77','--contrast-text':'#eaffff','--text-color':'#eaffff'
+        }, bodyClass:'theme-electric'
+      },
+      {
+        id:'inferno', name:'Inferno Rush',
+        vars:{
+          '--bg':'#1A0502','--bg-2':'#160304','--accent-1':'#ff3c00','--accent-2':'#ffb347','--glow-main':'rgba(255,84,24,0.12)',
+          '--grid-primary':'rgba(255,84,24,0.06)','--grid-secondary':'rgba(255,140,60,0.03)',
+          '--orb-1':'radial-gradient(circle,#ff3c00 0%, rgba(255,60,0,0.06) 55%)','--orb-2':'radial-gradient(circle,#ff8a00 0%, rgba(255,138,0,0.05) 55%)','--orb-3':'radial-gradient(circle,#ffcf66 0%, rgba(255,207,102,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0))','--card-border':'rgba(255,110,50,0.12)','--title-grad':'linear-gradient(90deg,#ff3c00,#ffb347,#ff3c00)','--btn-alt-bg':'linear-gradient(90deg,#ff6a2555,#ff9a6633)',
+          '--btn-shadow':'0 8px 30px rgba(180,40,20,0.16)','--note':'#ffbfa088','--subtitle':'#ffd7cacc','--footer':'#ffb07a77','--contrast-text':'#fff1ea','--text-color':'#fff1ea'
+        }, bodyClass:'theme-inferno'
+      },
+      {
+        id:'cosmic', name:'Cosmic Drift',
+        vars:{
+          '--bg':'#07021a','--bg-2':'#030015','--accent-1':'#a020f0','--accent-2':'#ff00ff','--glow-main':'rgba(160,30,220,0.10)',
+          '--grid-primary':'rgba(160,30,220,0.06)','--grid-secondary':'rgba(30,0,160,0.03)',
+          '--orb-1':'radial-gradient(circle,#a020f0 0%, rgba(160,30,220,0.05) 55%)','--orb-2':'radial-gradient(circle,#ff00ff 0%, rgba(255,0,255,0.05) 55%)','--orb-3':'radial-gradient(circle,#7a4bff 0%, rgba(120,80,255,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0))','--card-border':'rgba(140,50,200,0.10)','--title-grad':'linear-gradient(90deg,#a020f0,#ff00ff,#a020f0)','--btn-alt-bg':'linear-gradient(90deg,#8b3cff55,#b22aff33)',
+          '--btn-shadow':'0 8px 28px rgba(100,30,140,0.16)','--note':'#caaaff88','--subtitle':'#e0bfffcc','--footer':'#d9aaff77','--contrast-text':'#f6eaff','--text-color':'#f6eaff'
+        }, bodyClass:'theme-cosmic'
+      },
+      {
+        id:'void', name:'Void Breaker',
+        vars:{
+          '--bg':'#000000','--bg-2':'#070007','--accent-1':'#b00020','--accent-2':'#ff5555','--glow-main':'rgba(176,0,32,0.12)',
+          '--grid-primary':'rgba(200,20,40,0.06)','--grid-secondary':'rgba(255,80,80,0.03)',
+          '--orb-1':'radial-gradient(circle,#b00020 0%, rgba(176,0,32,0.06) 55%)','--orb-2':'radial-gradient(circle,#ff4040 0%, rgba(255,64,64,0.05) 55%)','--orb-3':'radial-gradient(circle,#661111 0%, rgba(102,17,17,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.0))','--card-border':'rgba(200,40,50,0.08)','--title-grad':'linear-gradient(90deg,#b00020,#ff5555,#b00020)','--btn-alt-bg':'linear-gradient(90deg,#b0002055,#8b000033)',
+          '--btn-shadow':'0 8px 28px rgba(120,10,30,0.18)','--note':'#ffb0b088','--subtitle':'#ffc8c8cc','--footer':'#ff9a9a77','--contrast-text':'#ffecec','--text-color':'#ffecec'
+        }, bodyClass:'theme-void'
+      },
+      {
+        id:'grove', name:'Neon Grove',
+        vars:{
+          '--bg':'#001a12','--bg-2':'#00120f','--accent-1':'#00ff99','--accent-2':'#00cc88','--glow-main':'rgba(0,255,153,0.12)',
+          '--grid-primary':'rgba(0,200,120,0.06)','--grid-secondary':'rgba(0,255,170,0.03)',
+          '--orb-1':'radial-gradient(circle,#00ff99 0%, rgba(0,255,153,0.05) 55%)','--orb-2':'radial-gradient(circle,#00cc88 0%, rgba(0,204,136,0.05) 55%)','--orb-3':'radial-gradient(circle,#22ffbb 0%, rgba(34,255,187,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0))','--card-border':'rgba(0,200,120,0.08)','--title-grad':'linear-gradient(90deg,#00ff99,#00cc88,#00ff99)','--btn-alt-bg':'linear-gradient(90deg,#00ff9955,#00cc8833)',
+          '--btn-shadow':'0 8px 28px rgba(0,120,80,0.14)','--note':'#bfffeebb','--subtitle':'#bfffe0cc','--footer':'#9fffdc77','--contrast-text':'#e8fff6','--text-color':'#e8fff6'
+        }, bodyClass:'theme-grove'
+      },
+      {
+        id:'frost', name:'Frost Circuit',
+        vars:{
+          '--bg':'#e6f1ff','--bg-2':'#dbeafc','--accent-1':'#0099ff','--accent-2':'#66bfff','--glow-main':'rgba(0,153,255,0.08)',
+          '--grid-primary':'rgba(0,140,220,0.06)','--grid-secondary':'rgba(0,170,240,0.03)',
+          '--orb-1':'radial-gradient(circle,#bfe8ff 0%, rgba(160,220,255,0.06) 55%)','--orb-2':'radial-gradient(circle,#9fd7ff 0%, rgba(130,200,255,0.05) 55%)','--orb-3':'radial-gradient(circle,#cfefff 0%, rgba(200,240,255,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(10,20,30,0.02), rgba(255,255,255,0.04))','--card-border':'rgba(160,210,255,0.12)','--title-grad':'linear-gradient(90deg,#e6f1ff,#9fd7ff,#e6f1ff)','--btn-alt-bg':'linear-gradient(90deg,#9fd7ff55,#66bfff33)',
+          '--btn-shadow':'0 8px 30px rgba(70,120,170,0.08)','--note':'#507fa088','--subtitle':'#4a6f8fcc','--footer':'#6b93b077','--contrast-text':'#062033','--text-color':'#062033'
+        }, bodyClass:'theme-frost'
+      },
+      {
+        id:'chrono', name:'Chrono Core',
+        vars:{
+          '--bg':'#1a1a1a','--bg-2':'#0f0f0f','--accent-1':'#ffd700','--accent-2':'#c0c0c0','--glow-main':'rgba(255,215,0,0.10)',
+          '--grid-primary':'rgba(200,160,30,0.06)','--grid-secondary':'rgba(200,200,200,0.03)',
+          '--orb-1':'radial-gradient(circle,#ffd700 0%, rgba(255,215,0,0.05) 55%)','--orb-2':'radial-gradient(circle,#c0c0c0 0%, rgba(200,200,200,0.05) 55%)','--orb-3':'radial-gradient(circle,#ffdf80 0%, rgba(255,223,128,0.04) 55%)',
+          '--card-bg':'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))','--card-border':'rgba(200,160,30,0.08)','--title-grad':'linear-gradient(90deg,#ffd700,#c0c0c0,#ffd700)','--btn-alt-bg':'linear-gradient(90deg,#ffd70033,#c0c0c033)',
+          '--btn-shadow':'0 8px 28px rgba(120,100,30,0.12)','--note':'#e9d5a477','--subtitle':'#f6e6cacc','--footer':'#d6c28577','--contrast-text':'#fff9ec','--text-color':'#fff9ec'
+        }, bodyClass:'theme-chrono'
+      }
+    ];
+
+    const themePicker = document.getElementById('themePicker');
+    const themeLabel = document.getElementById('themeLabel');
+    const autoToggle = document.getElementById('autoToggle');
+
+    const idToIndex = {};
+    THEMES.forEach((t,i)=>{ idToIndex[t.id]=i; const opt=document.createElement('option'); opt.value=t.id; opt.textContent=t.name; themePicker.appendChild(opt); });
+
+    let themeIndex = 0;
+    const STORAGE_KEY = 'shooym_theme';
+    const STORAGE_AUTO = 'shooym_theme_auto';
+
+    function applyTheme(index, options={animate:true, save:true}){
+      index = ((index%THEMES.length)+THEMES.length)%THEMES.length;
+      themeIndex = index;
+      const theme = THEMES[themeIndex];
+      for(const k in theme.vars) document.documentElement.style.setProperty(k, theme.vars[k]);
+      document.body.classList.remove(...THEMES.map(t=>t.bodyClass));
+      if(theme.bodyClass) document.body.classList.add(theme.bodyClass);
+      themePicker.value = theme.id;
+      themeLabel.textContent = theme.name;
+      document.body.style.background = `var(--bg)`;
+      document.documentElement.style.setProperty('--text-color', theme.vars['--text-color'] || theme.vars['--contrast-text'] || '#fff');
+      if(options.animate){
+        document.documentElement.style.transition = `background ${getComputedStyle(document.documentElement).getPropertyValue('--transition-fast') || '350ms'} ease, color ${getComputedStyle(document.documentElement).getPropertyValue('--transition-fast') || '350ms'} ease`;
+      } else {
+        document.documentElement.style.transition = 'none';
+      }
+      if(options.save) localStorage.setItem(STORAGE_KEY, theme.id);
+      staggerAnimateCards();
+    }
+
+    function cycleTheme(dir=1){
+      applyTheme((themeIndex + dir + THEMES.length) % THEMES.length);
+    }
+
+    function initTheme(){
+      const forcedTheme = localStorage.getItem(STORAGE_KEY);
+      const auto = localStorage.getItem(STORAGE_AUTO);
+      if(auto === 'false') autoToggle.checked = false;
+      if(forcedTheme){
+        const idx = idToIndex[forcedTheme];
+        if(typeof idx === 'number') { applyTheme(idx, {animate:false, save:false}); return; }
+      }
+      applyTheme(hourIndexFromNow(), {animate:false, save:false});
+    }
+
+    function hourIndexFromNow(){
+      const h = new Date().getHours();
+      return h % THEMES.length;
+    }
+
+    let lastHour = new Date().getHours();
+    setInterval(()=> {
+      if(!autoToggle.checked) return;
+      const nowH = new Date().getHours();
+      if(nowH !== lastHour){
+        lastHour = nowH;
+        applyTheme((hourIndexFromNow()), {animate:true, save:false});
+      }
+      localStorage.setItem(STORAGE_AUTO, autoToggle.checked ? 'true' : 'false');
+    }, 60_000);
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key.toLowerCase() === 'c' && e.shiftKey){ e.preventDefault(); cycleTheme(1); localStorage.setItem(STORAGE_AUTO,'false'); autoToggle.checked=false; localStorage.setItem(STORAGE_KEY, THEMES[themeIndex].id); }
+      if(e.key.toLowerCase() === 'x' && e.shiftKey){ e.preventDefault(); cycleTheme(-1); localStorage.setItem(STORAGE_AUTO,'false'); autoToggle.checked=false; localStorage.setItem(STORAGE_KEY, THEMES[themeIndex].id); }
+    });
+
+    themePicker.addEventListener('change', e => { const id = e.target.value; applyTheme(idToIndex[id]); localStorage.setItem(STORAGE_AUTO,'false'); autoToggle.checked=false; });
+    autoToggle.addEventListener('change', ()=> { localStorage.setItem(STORAGE_AUTO, autoToggle.checked ? 'true' : 'false'); if(autoToggle.checked) { applyTheme(hourIndexFromNow()); } });
+
+    /***********************************************************
+     * ORBS + CANVAS: Grid + Particles
+     ***********************************************************/
+    const gridCanvas = document.getElementById('grid');
+    const gridCtx = gridCanvas.getContext('2d');
+    const particlesCanvas = document.getElementById('particles');
+    const pCtx = particlesCanvas.getContext('2d');
+
+    function resizeCanvases(){
+      gridCanvas.width = particlesCanvas.width = innerWidth * devicePixelRatio;
+      gridCanvas.height = particlesCanvas.height = innerHeight * devicePixelRatio;
+      gridCanvas.style.width = particlesCanvas.style.width = innerWidth + 'px';
+      gridCanvas.style.height = particlesCanvas.style.height = innerHeight + 'px';
+      gridCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+      pCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+    }
+    addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    let t = 0;
+    function drawGrid(){
+      gridCtx.clearRect(0,0,innerWidth,innerHeight);
+      const cs = getComputedStyle(document.documentElement);
+      const gp = cs.getPropertyValue('--grid-primary') || 'rgba(110,80,255,0.06)';
+      const gs = cs.getPropertyValue('--grid-secondary') || 'rgba(0,160,255,0.03)';
+      const cols=40, rows=40;
+      gridCtx.lineWidth = 1;
+      for(let i=0;i<cols;i++){
+        gridCtx.beginPath();
+        const x = i/(cols-1)*innerWidth;
+        for(let j=0;j<rows;j++){
+          const y = j/(rows-1)*innerHeight + Math.sin(t + i*0.22 + j*0.44)*18;
+          if(j===0) gridCtx.moveTo(x,y); else gridCtx.lineTo(x,y);
         }
+        gridCtx.strokeStyle = gp.trim();
+        gridCtx.stroke();
+      }
+      for(let j=0;j<rows;j++){
+        gridCtx.beginPath();
+        const y = j/(rows-1)*innerHeight;
+        for(let i=0;i<cols;i++){
+          const x = i/(cols-1)*innerWidth + Math.cos(t + i*0.42 + j*0.28)*18;
+          if(i===0) gridCtx.moveTo(x,y); else gridCtx.lineTo(x,y);
+        }
+        gridCtx.strokeStyle = gs.trim();
+        gridCtx.stroke();
+      }
+      t += 0.018;
+    }
 
-        loadGame();
-    </script>
+    const particles = [];
+    const PARTICLE_COUNT = Math.min(120, Math.floor((innerWidth*innerHeight)/60000));
+    function createParticles(){
+      particles.length = 0;
+      for(let i=0;i<Math.max(60, PARTICLE_COUNT); i++){
+        particles.push({
+          x: Math.random()*innerWidth,
+          y: Math.random()*innerHeight,
+          vx: (Math.random()-0.5)*0.2,
+          vy: (Math.random()-0.5)*0.2,
+          r: 1 + Math.random()*3,
+          life: 20 + Math.random()*80,
+          hue: Math.random()*360,
+          alpha: 0.06 + Math.random()*0.14
+        });
+      }
+    }
+    createParticles();
+    addEventListener('resize', createParticles);
+
+    const mouse = { x: innerWidth/2, y: innerHeight/2, tx: innerWidth/2, ty: innerHeight/2 };
+    document.addEventListener('mousemove', e => { mouse.tx = e.clientX; mouse.ty = e.clientY; document.body.style.setProperty('--x', e.clientX + 'px'); document.body.style.setProperty('--y', e.clientY + 'px'); });
+
+    function easeMouse(){
+      mouse.x += (mouse.tx - mouse.x) * 0.14;
+      mouse.y += (mouse.ty - mouse.y) * 0.14;
+    }
+
+    function drawParticles(){
+      pCtx.clearRect(0,0,innerWidth,innerHeight);
+      pCtx.globalCompositeOperation = 'lighter';
+      particles.forEach(p=>{
+        const dx = (mouse.x - p.x), dy = (mouse.y - p.y);
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        const force = Math.max(0, 100 - dist) * 0.00012;
+        p.vx += dx/dist * force;
+        p.vy += dy/dist * force;
+        p.x += p.vx;
+        p.y += p.vy;
+        if(p.x < -20) p.x = innerWidth + 20;
+        if(p.x > innerWidth + 20) p.x = -20;
+        if(p.y < -20) p.y = innerHeight + 20;
+        if(p.y > innerHeight + 20) p.y = -20;
+        const cs = getComputedStyle(document.documentElement);
+        const accent1 = cs.getPropertyValue('--accent-1') || '#00ffff';
+        pCtx.beginPath();
+        const g = pCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r*8);
+        g.addColorStop(0, hexToRgba(accent1.trim(), Math.min(0.28, p.alpha + 0.05)));
+        g.addColorStop(0.3, hexToRgba(accent1.trim(), p.alpha * 0.6));
+        g.addColorStop(1, hexToRgba(accent1.trim(), 0));
+        pCtx.fillStyle = g;
+        pCtx.fillRect(p.x - p.r*8, p.y - p.r*8, p.r*16, p.r*16);
+      });
+      pCtx.globalCompositeOperation = 'source-over';
+    }
+
+    function hexToRgba(col, a){
+      if(col.startsWith('rgba') || col.startsWith('rgb')) {
+        return col.replace('rgb', 'rgba').replace(')', `, ${a})`);
+      }
+      let hex = col.replace('#','');
+      if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+      const r = parseInt(hex.substring(0,2),16), g = parseInt(hex.substring(2,4),16), b = parseInt(hex.substring(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function bgLoop(){
+      easeMouse();
+      drawGrid();
+      drawParticles();
+      requestAnimationFrame(bgLoop);
+    }
+    bgLoop();
+
+    /***********************************************************
+     * GAME FETCHING & LAUNCHING LOGIC
+     ***********************************************************/
+    const zonesurls = [
+  "https://cdn.jsdelivr.net/gh/freebuisness/assets@main/zones.json",
+  "https://cdn.jsdelivr.net/gh/freebuisness/assets@latest/zones.json",
+  "https://cdn.jsdelivr.net/gh/freebuisness/assets@master/zones.json",
+  "https://cdn.jsdelivr.net/gh/freebuisness/assets/zones.json"
+];
+
+// pick one (random fallback)
+const zonesURL = zonesurls[Math.floor(Math.random() * zonesurls.length)];
+    const coverURL = "https://cdn.jsdelivr.net/gh/freebuisness/covers@main";
+    const htmlURL = "https://cdn.jsdelivr.net/gh/freebuisness/html@main";
+
+    async function loadGNMathGames() {
+      const grid = document.getElementById('vipGames');
+      
+      try {
+        const response = await fetch(zonesURL + "?t=" + Date.now());
+        const zones = await response.json();
+        
+        zones.forEach(file => {
+          const card = document.createElement('div');
+          card.className = 'game-card';
+
+          let finalUrl = file.url.startsWith("http") ? file.url : file.url.replace("{COVER_URL}", coverURL).replace("{HTML_URL}", htmlURL);
+          card.onclick = () => openGame(finalUrl, true);
+          
+          const img = document.createElement('img');
+          img.src = file.cover.replace("{COVER_URL}", coverURL).replace("{HTML_URL}", htmlURL);
+          img.alt = file.name;
+          img.className = 'thumb';
+          img.loading = 'lazy';
+          
+          const title = document.createElement('span');
+          title.textContent = file.name;
+          
+          card.appendChild(img);
+          card.appendChild(title);
+          
+          grid.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error("Failed to load GN-Math games:", error);
+      }
+    }
+    
+    loadGNMathGames();
+
+    /***********************************************************
+     * CARD ANIMATIONS + ACCESSIBILITY
+     ***********************************************************/
+    function staggerAnimateCards(){
+      const grids = [document.getElementById('publicGames'), document.getElementById('vipGames')];
+      
+      grids.forEach(grid => {
+        if(!grid) return;
+        if(grid.id === 'vipGames' && grid.style.display !== 'grid') return;
+        
+        const cards = Array.from(grid.querySelectorAll('.game-card'));
+        const tname = THEMES[themeIndex].id;
+        
+        // Define exact animation strings natively (prevent computedStyle mismatch bug)
+        let animName = 'cardInUp';
+        if(tname === 'inferno') animName = 'cardInLeft';
+        if(tname === 'cosmic') animName = 'cardInRight';
+        if(tname === 'void') animName = 'cardInPop';
+        if(tname === 'grove') animName = 'cardInRotate';
+        if(tname === 'frost') animName = 'cardInFade';
+        if(tname === 'chrono') animName = 'cardInUp';
+        
+        // Reset 
+        cards.forEach(c => { c.style.animation = 'none'; c.style.opacity = 0; });
+
+        let order = cards.map((_,i)=>i);
+        if(tname === 'electric'){ order = order; }
+        else if(tname === 'inferno'){ order = order.slice().reverse(); }
+        else if(tname === 'cosmic'){ order = centerOut(order); }
+        else if(tname === 'void'){ order = shuffle(order.slice()); }
+        else if(tname === 'grove'){ order = serpent(order, grid); }
+        else if(tname === 'frost'){ order = order; }
+        else if(tname === 'chrono'){ order = order; }
+
+        order.forEach((idx, i) => {
+          const c = cards[idx];
+          const baseDelay = i * 4;
+          let dur = 100;
+          if(tname === 'inferno') dur = 620;
+          if(tname === 'cosmic') dur = 720;
+          if(tname === 'chrono') dur = 880;
+          if(tname === 'frost') dur = 420;
+          
+          c.style.animation = `none`;
+          void c.offsetWidth; // Force Reflow
+          c.style.animation = `${animName} ${dur}ms cubic-bezier(.15,.9,.35,1) ${baseDelay}ms forwards`;
+          
+          // Absolute fallback visibility lock
+          setTimeout(()=>{ c.style.opacity = 1; c.style.transform = 'none'; }, baseDelay + dur);
+        });
+      });
+    }
+
+    function centerOut(arr){
+      const out = [], mid = Math.floor(arr.length/2);
+      for(let i=0;i<mid;i++){ out.push(mid + i); out.push(mid - i - 1); }
+      if(arr.length%2) out.push(arr[0]);
+      return out.filter(x => x !== undefined && x !== null);
+    }
+    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+    function serpent(order, grid){
+      const cols = Math.max(1, Math.floor(grid.offsetWidth / 220));
+      const out = [];
+      for(let r=0;r<1000;r++){
+        for(let c=0;c<cols;c++){
+          const idx = r*cols + (r%2 ? (cols-1-c) : c);
+          if(idx >= order.length) break;
+          out.push(idx);
+        }
+        if(out.length >= order.length) break;
+      }
+      return out.slice(0, order.length);
+    }
+
+    window.addEventListener('load', () => {
+      animateCardsOnce();
+      initTheme();
+      document.getElementById('bgMusic').play().catch(()=>{});
+    });
+
+    function animateCardsOnce(){
+      const publicGrid = document.getElementById('publicGames');
+      const cards = publicGrid.querySelectorAll('.game-card');
+      cards.forEach((c,i) => { c.style.animation = `cardInUp .6s cubic-bezier(.15,.9,.35,1) ${(i*45)}ms forwards`; });
+    }
+
+    /***********************************************************
+     * MUSIC + OPEN GAME + VIP + SEARCH LOGIC
+     ***********************************************************/
+    const music = document.getElementById('bgMusic');
+    const musicBtn = document.getElementById('musicToggle');
+    music.volume = 0.28; music.muted = true; musicBtn.textContent = 'Music (muted)';
+    musicBtn.addEventListener('click', () => {
+      if(music.muted){ music.muted = false; music.play().catch(()=>{}); musicBtn.textContent = 'Music (on)'; musicBtn.classList.add('alt'); }
+      else { music.muted = true; musicBtn.textContent = 'Music (muted)'; musicBtn.classList.remove('alt'); }
+    });
+
+    // Modified openGame: Now forces about:blank automatic opening
+    function openGame(path, isCloudFetch = false) {
+      const baseURL = "https://shooymgames.vercel.app/";
+      const fullURL = path.startsWith("http") ? path : baseURL + path;
+
+      const win = window.open("about:blank", "_blank");
+      if (!win) {
+        alert("Popup blocker prevented the game from opening. Please allow popups.");
+        return;
+      }
+      
+      // Cloaking logic
+      win.document.title = "Google Docs"; 
+      const iconLink = win.document.createElement("link");
+      iconLink.rel = "icon";
+      iconLink.href = "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico";
+      win.document.head.appendChild(iconLink);
+      
+      win.document.body.style.margin = '0'; 
+      win.document.body.style.height = '100vh';
+      win.document.body.style.overflow = 'hidden';
+      win.document.body.style.backgroundColor = '#000';
+
+      if(isCloudFetch) {
+        fetch(fullURL + "?t=" + Date.now())
+            .then(response => response.text())
+            .then(html => {
+                win.document.open();
+                win.document.write(html);
+                win.document.close();
+            })
+            .catch(error => {
+                win.document.body.innerHTML = `<h2 style="color:white; text-align:center; margin-top:20%">Failed to load game: ${error}</h2>`;
+            });
+      } else {
+        const iframe = document.createElement('iframe');
+        iframe.style.border='none'; iframe.style.width='100%'; iframe.style.height='100%'; iframe.src = fullURL;
+        win.document.body.appendChild(iframe); 
+      }
+    }
+
+    // New Filter/Search logic
+    function filterGames() {
+      const input = document.getElementById('gameSearch');
+      const filter = input.value.toLowerCase();
+      const allCards = document.querySelectorAll('.game-card');
+
+      allCards.forEach(card => {
+        const title = card.querySelector('span').textContent.toLowerCase();
+        if (title.includes(filter)) {
+          card.style.display = "";
+          card.style.opacity = "1";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    function closeGame() {
+      const overlay = document.getElementById("gameOverlay");
+      const frame = document.getElementById("gameFrame");
+
+      overlay.style.display = "none";
+      frame.src = "";
+      frame.removeAttribute('srcdoc');
+    }
+
+    function unlockVIP(){
+      const p = document.getElementById('vipPassword').value;
+      const vipGames = document.getElementById('vipGames');
+      if(p === '69420'){ 
+        vipGames.style.display = 'grid'; 
+        vipGames.setAttribute('aria-hidden','false'); 
+
+        // Emergency fallback: Show everything instantly behind the scenes before animations
+        vipGames.querySelectorAll('.game-card').forEach(c => {
+          c.style.opacity = '1';
+          c.style.transform = 'none';
+        });
+
+        staggerAnimateCards(); 
+        alert('VIP games unlocked!'); 
+      }
+      else alert('Incorrect VIP password!');
+    }
+
+    document.addEventListener('keydown', e => { if(e.key === 'Enter'){ const focused = document.activeElement; if(focused && focused.classList.contains('game-card')) focused.click(); } });
+    document.querySelectorAll('.game-card').forEach(c => { c.setAttribute('tabindex','0'); c.setAttribute('role','button'); c.setAttribute('aria-pressed','false'); c.addEventListener('keydown', ev => { if(ev.key === 'Enter' || ev.key === ' ') ev.currentTarget.click(); }); });
+
+    /***********************************************************
+     * UTIL
+     ***********************************************************/
+    (function boot(){
+      const savedTheme = localStorage.getItem(STORAGE_KEY);
+      const savedAuto = localStorage.getItem(STORAGE_AUTO);
+      if(savedAuto === 'false') autoToggle.checked = false;
+      if(savedTheme && idToIndex[savedTheme] !== undefined){
+        applyTheme(idToIndex[savedTheme], {animate:true, save:false});
+      } else {
+        applyTheme(hourIndexFromNow(), {animate:true, save:false});
+      }
+    })();
+
+    /***********************************************************
+     * ANNOUNCEMENT POPUP
+     ***********************************************************/
+    function closeAnnouncement() {
+      document.getElementById('announcementModal').classList.remove('show');
+      sessionStorage.setItem('shooym_announcement_seen', 'true');
+    }
+
+    window.addEventListener('load', () => {
+      if (!sessionStorage.getItem('shooym_announcement_seen')) {
+        setTimeout(() => {
+          document.getElementById('announcementModal').classList.add('show');
+        }, 600); 
+      }
+    });
+
+  </script>
 </body>
 </html>
