@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; background-color: #020202; margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow: hidden;">
+            <style>
+                :root {
+                    --accent-color: #7a1b8c;
+                    --accent-glow: rgba(122, 27, 140, 0.5);
+                    --text-bright: #FFFFFF;
+                    --text-subtle: #888888;
+                    --bg-color: #020202;
+                    --nav-height: 64px;
+                }
+                .space-bg {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: radial-gradient(circle at 50% 50%, #120117 0%, transparent 70%), radial-gradient(circle at 20% 30%, #0a010c 0%, transparent 40%);
+                    z-index: -2;
+                }
+                .stars-container {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+                    background-image: radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 40px 70px, #fff, rgba(0,0,0,0));
+                    background-repeat: repeat; background-size: 200px 200px; opacity: 0.2; animation: twinkle 5s infinite alternate;
+                }
+                .stars-bright {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+                    background-image: radial-gradient(2px 2px at 100px 150px, #fff, rgba(0,0,0,0)), radial-gradient(2px 2px at 500px 100px, #fff, rgba(0,0,0,0));
+                    background-repeat: repeat; background-size: 800px 800px; opacity: 0.4;
+                }
+                #shooting-stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+                .shooting-star { position: absolute; width: 150px; height: 2px; background: linear-gradient(90deg, #fff, transparent); border-radius: 50%; filter: drop-shadow(0 0 5px #fff); transform: rotate(-35deg); opacity: 0; }
+                @keyframes shoot { 0% { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateX(-800px) translateY(600px) rotate(-35deg); opacity: 0; } }
+                @keyframes twinkle { from { opacity: 0.15; } to { opacity: 0.4; } }
+                .top-navbar { position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height); display: flex; justify-content: center; align-items: center; z-index: 1000000; }
+                .nav-background-bar { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: -1; }
+                .nav-links { display: flex; gap: 10px; }
+                .nav-item { color: var(--text-subtle); font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; padding: 8px 14px; cursor: pointer; border-radius: 4px; transition: 0.3s; }
+                .nav-item:hover { color: var(--text-bright); background: rgba(255, 255, 255, 0.03); }
+                .nav-item.active { color: var(--text-bright); background: rgba(122, 27, 140, 0.15); }
+                .nav-logo { width: 20px; height: 20px; }
+                .nav-label { opacity: 0; transition: 0.2s; max-width: 0; overflow: hidden; white-space: nowrap; }
+                .top-navbar.show-labels .nav-label { opacity: 1; max-width: 120px; margin-left: 4px; }
+                #app-viewer { position: fixed; top: var(--nav-height); left: 0; width: 100vw; height: calc(100vh - var(--nav-height)); border: none; z-index: 99999; display: none; }
+                #dashboard-ui { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
+                .astral-text-img { width: 450px; max-width: 90vw; filter: drop-shadow(0 0 30px var(--accent-glow)); animation: pulse-glow 4s infinite alternate ease-in-out; }
+                @keyframes pulse-glow { from { opacity: 0.9; } to { opacity: 1; } }
+                .splash-text-container { font-family: monospace; font-size: 14px; color: var(--accent-color); letter-spacing: 4px; margin-top: 20px; }
+                .big-clock { position: absolute; bottom: 120px; font-family: monospace; font-size: 18px; letter-spacing: 8px; color: rgba(255,255,255,0.15); }
+                .dashboard-footer { position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-between; padding: 15px 40px; font-family: monospace; font-size: 9px; color: #444; }
+                #fetch-loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000000; display: none; color: white; background: rgba(0,0,0,0.98); padding: 40px 60px; border-left: 4px solid var(--accent-color); letter-spacing: 6px; }
+            </style>
+
+            <div class="space-bg"></div>
+            <div class="stars-container"></div>
+            <div class="stars-bright"></div>
+            <div id="shooting-stars"></div>
+            <div id="fetch-loader">TRANSMITTING...</div>
+
+            <nav class="top-navbar" id="main-nav">
+                <div class="nav-background-bar"></div>
+                <div class="nav-links">
+                    <div class="nav-item active" id="btn-home">
+                        <img src="https://cdn.jsdelivr.net/gh/jupitergoesbrr/Astral-Project@main/AstralLogo.png" class="nav-logo" alt="Logo" />
+                        <span class="nav-label">Home</span>
+                    </div>
+                    <div class="nav-item" data-url="https://cdn.jsdelivr.net/gh/jupitergoesbrr/Astral-Project@comps/AstralArcade.html">
+                        <span class="nav-label">Arcade</span>
+                    </div>
+                    <div class="nav-item" data-url="https://cdn.jsdelivr.net/gh/jupitergoesbrr/Astral-Project@comps/AstralAI.html">
+                        <span class="nav-label">AI</span>
+                    </div>
+                </div>
+            </nav>
+
+            <iframe id="app-viewer" name="app-viewer"></iframe>
+
+            <div id="dashboard-ui">
+                <div class="hero-branding">
+                    <img src="https://cdn.jsdelivr.net/gh/jupitergoesbrr/Astral-Project@main/AstralText.png" class="astral-text-img" alt="The Astral Project" />
+                    <div id="splash-text" class="splash-text-container">Initializing...</div>
+                </div>
+                <div class="big-clock" id="digital-clock">00:00:00</div>
+                <footer class="dashboard-footer">
+                    <div>ESTABLISHED SINCE 2026</div>
+                    <div>© Astral project 2026</div>
+                </footer>
+            </div>
+
+            <script type="text/javascript">
+                <![CDATA[
+                const splashes = ["Security is our thing", "Orbit secured", "Quantum shield activated", "Bypass everything", "No trace, no mercy"];
+                const splashEl = document.getElementById('splash-text');
+                let splashIndex = 0;
+                
+                setInterval(() => {
+                    splashEl.innerText = splashes[splashIndex];
+                    splashIndex = (splashIndex + 1) % splashes.length;
+                }, 4000);
+
+                function updateClock() {
+                    const now = new Date();
+                    document.getElementById('digital-clock').innerText = now.toLocaleTimeString('en-GB', { hour12: false });
+                }
+                setInterval(updateClock, 1000);
+
+                // Mouse interaction for Nav
+                document.addEventListener('mousemove', (e) => {
+                    const nav = document.getElementById('main-nav');
+                    if (e.clientY < 100) nav.classList.add('show-labels');
+                    else nav.classList.remove('show-labels');
+                });
+                ]]>
+            </script>
+        </div>
+    </foreignObject>
+</svg>
